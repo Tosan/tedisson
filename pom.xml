@@ -18,7 +18,7 @@
         Spring Boot applications. It leverages Redisson to offer a seamless interface for common cache operations
         such as adding to cache, removing from cache, and more.
     </description>
-    <url>https://github.com/Tosan/tedisson-spring-boot-starter</url>
+    <url>https://github.com/Tosan/tedisson</url>
 
     <licenses>
         <license>
@@ -42,8 +42,9 @@
     </modules>
 
     <scm>
-        <connection>scm:git:ssh://git@bitbucket.tosanltd.com:7999/sdk/tedisson.git</connection>
-        <developerConnection>scm:git:ssh://git@bitbucket.tosanltd.com:7999/sdk/tedisson.git</developerConnection>
+        <connection>scm:git:https://github.com/Tosan/tedisson.git</connection>
+        <developerConnection>scm:git:https://github.com/Tosan/tedisson.git</developerConnection>
+        <url>https://github.com/Tosan/tedisson</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -116,7 +117,7 @@
                 <repository>
                     <id>github</id>
                     <name>GitHub</name>
-                    <url>https://maven.pkg.github.com/Tosan/tedisson-spring-boot-starter</url>
+                    <url>https://maven.pkg.github.com/Tosan/tedisson</url>
                 </repository>
             </distributionManagement>
         </profile>
