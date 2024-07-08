@@ -1,0 +1,26 @@
+server:
+  port: 8081
+
+logging:
+  level:
+    com.tosan.client.redis: DEBUG
+
+tedisson:
+  local:
+    cache-provider: caffeine
+  redis:
+    connection-type: single_node
+    enabled: false
+    username: default
+    password:
+    single-server:
+      address: localhost:10501
+      database: 10
+    stream:
+      enabled: false
+      max-message-size: 10
+      trim-rate-second: 10
+      thread-pool:
+        core-pool-size: 10
+        queue-capacity: 10
+        max-pool-size: 20
