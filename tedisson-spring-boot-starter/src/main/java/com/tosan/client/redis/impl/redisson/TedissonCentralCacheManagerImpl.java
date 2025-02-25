@@ -296,7 +296,7 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
         if (timeToIdle == null) {
             timeToIdle = 0L;
         }
-        map.updateEntryExpiration(key, timeToLive, timeUnit, timeToIdle, timeUnit);
+        map.expireEntry(key, Duration.ofSeconds(timeUnit.toSeconds(timeToLive)), Duration.ofSeconds(timeUnit.toSeconds(timeToIdle)));
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.tosan.client.redis.configuration;
 
 import com.tosan.client.redis.configuration.redisson.TedissonProperties;
+import com.tosan.client.redis.configuration.redisson.TedissonPropertiesCustomizer;
 import com.tosan.client.redis.exception.TedissonException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -23,9 +24,11 @@ public class RedissonClientFactory {
     private static final String REDISS_PROTOCOL_PREFIX = "rediss://";
     private final TedissonProperties tedissonProperties;
     private RedissonClient redisClient;
+    private List<TedissonPropertiesCustomizer> customizers;
 
-    public RedissonClientFactory(TedissonProperties tedissonProperties) throws TedissonException {
+    public RedissonClientFactory(TedissonProperties tedissonProperties, List<TedissonPropertiesCustomizer> customizers) throws TedissonException {
         this.tedissonProperties = tedissonProperties;
+        this.customizers = customizers;
         createInstance();
     }
 
@@ -54,6 +57,11 @@ public class RedissonClientFactory {
         try {
             config.setThreads(tedissonProperties.getRedis().getThreads());
             config.setNettyThreads(tedissonProperties.getRedis().getNettyThreads());
+            if (CollectionUtils.isNotEmpty(customizers)) {
+                for (TedissonPropertiesCustomizer customizer : customizers) {
+                    customizer.customize(config);
+                }
+            }
             redisClient = Redisson.create(config);
         } catch (Exception e) {
             throw new TedissonException("Could not connect to redis server!");
