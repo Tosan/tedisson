@@ -72,7 +72,7 @@ public class TedissonAutoConfiguration {
         return centralCacheManager;
     }
 
-    @Bean("localCacheManager")
+    @Bean("ehcacheLocalCacheManager")
     @Primary
     @ConditionalOnProperty(name = "tedisson.local.cache-provider", havingValue = "ehcache", matchIfMissing = true)
     public EhCacheManager ehcacheLocalCacheManager(Optional<MessageQueueManager> messageQueueManager) {
@@ -83,7 +83,7 @@ public class TedissonAutoConfiguration {
         return ehCacheManager;
     }
 
-    @Bean("localCacheManager")
+    @Bean("caffeineLocalCacheManager")
     @ConditionalOnProperty(name = "tedisson.local.cache-provider", havingValue = "caffeine", matchIfMissing = true)
     public CaffeineCacheManager caffeineLocalCacheManager(Optional<MessageQueueManager> messageQueueManager) {
         CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
