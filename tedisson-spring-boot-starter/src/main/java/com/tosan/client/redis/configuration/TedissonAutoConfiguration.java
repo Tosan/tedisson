@@ -3,6 +3,7 @@ package com.tosan.client.redis.configuration;
 import com.tosan.client.redis.api.LocalCacheManager;
 import com.tosan.client.redis.api.TedissonCacheManager;
 import com.tosan.client.redis.configuration.redisson.TedissonProperties;
+import com.tosan.client.redis.configuration.redisson.TedissonPropertiesCustomizer;
 import com.tosan.client.redis.exception.TedissonException;
 import com.tosan.client.redis.impl.TedissonLocalCacheManagerImpl;
 import com.tosan.client.redis.impl.localCacheManager.LocalCacheManagerBase;
@@ -32,6 +33,7 @@ import org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProc
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.config.TaskManagementConfigUtils;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -45,6 +47,8 @@ public class TedissonAutoConfiguration {
 
     @Autowired
     private TedissonProperties tedissonProperties;
+    @Autowired(required = false)
+    private List<TedissonPropertiesCustomizer> customizerList;
 
     @Bean
     @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "false", matchIfMissing = true)
@@ -97,14 +101,14 @@ public class TedissonAutoConfiguration {
     @ConditionalOnMissingBean(RedissonClient.class)
     @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
     public RedissonClient redissonClient() throws TedissonException {
-        return new RedissonClientFactory(tedissonProperties).getInstance();
+        return new RedissonClientFactory(tedissonProperties, customizerList).getInstance();
     }
 
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean(RedissonClient.class)
     @ConditionalOnProperty(name = "tedisson.redis.stream.enabled", havingValue = "true")
     public RedissonClient streamRedissonClient() throws TedissonException {
-        return new RedissonClientFactory(tedissonProperties).getInstance();
+        return new RedissonClientFactory(tedissonProperties, customizerList).getInstance();
     }
 
     @Bean
