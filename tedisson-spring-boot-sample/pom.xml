@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>tedisson-spring-boot-sample</artifactId>
+    <name>tedisson-spring-boot-sample</name>
 
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
