@@ -48,9 +48,9 @@ public class RedisProperties extends Config {
     private String password;
 
     /**
-     * If pooled connection not used for a <code>timeout</code> time
-     * and current connections amount bigger than minimum idle connections pool size,
-     * then it will closed and removed from pool.
+     * If a pooled connection is not used for a specified <code>timeout</code> period
+     * and the current number of connections exceeds the minimum idle connections pool size,
+     * it will be closed and removed from the pool.
      * Value in milliseconds.
      */
     private int idleConnectionTimeout = 10000;
@@ -62,7 +62,7 @@ public class RedisProperties extends Config {
     private int connectTimeout = 10000;
 
     /**
-     * Redis server response timeout. Starts to countdown when Redis command was succesfully sent.
+     * Redis server response timeout. Starts to countdown when Redis command was successfully sent.
      * Value in milliseconds.
      */
     private int timeout = 3000;
@@ -189,7 +189,7 @@ public class RedisProperties extends Config {
     private String[] sslCiphers = null;
 
     /**
-     * Stream propertie
+     * Stream properties
      */
     @NestedConfigurationProperty
     private StreamProperties stream;

@@ -1,7 +1,6 @@
 package com.tosan.client.redis.impl.localCacheManager.caffeine;
 
 import com.github.benmanes.caffeine.cache.Expiry;
-import org.checkerframework.checker.index.qual.NonNegative;
 
 import java.util.concurrent.TimeUnit;
 
@@ -26,18 +25,19 @@ public class CaffeineExpiry implements Expiry<String, CaffeineElement> {
     }
 
     @Override
-    public long expireAfterUpdate(String key, CaffeineElement element, long currentTime, @NonNegative long currentDuration) {
+    public long expireAfterUpdate(String key, CaffeineElement element, long currentTime, long currentDuration) {
         if (element == null || element.getTimeToIdleSecond() == null) {
             return currentDuration;
         }
-        if (element.getExpirationTimeNano() != null && ((currentTime + getTimeInNanoSeconds(element.getTimeToIdleSecond())) > element.getExpirationTimeNano())) {
+        if (element.getExpirationTimeNano() != null &&
+                ((currentTime + getTimeInNanoSeconds(element.getTimeToIdleSecond())) > element.getExpirationTimeNano())) {
             return element.getExpirationTimeNano() - currentTime;
         }
         return TimeUnit.SECONDS.toNanos(element.getTimeToIdleSecond());
     }
 
     @Override
-    public long expireAfterRead(String key, CaffeineElement element, long currentTime, @NonNegative long currentDuration) {
+    public long expireAfterRead(String key, CaffeineElement element, long currentTime, long currentDuration) {
         if (element == null || element.getTimeToIdleSecond() == null) {
             return currentDuration;
         }
