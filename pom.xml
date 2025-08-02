@@ -11,6 +11,7 @@
     <groupId>com.tosan.client.redis</groupId>
     <artifactId>tedisson</artifactId>
     <packaging>pom</packaging>
+    <name>tedisson</name>
     <version>1.5.1-SNAPSHOT</version>
 
     <description>
