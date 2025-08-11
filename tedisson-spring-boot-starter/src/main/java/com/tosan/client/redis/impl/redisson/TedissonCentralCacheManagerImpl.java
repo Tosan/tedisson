@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.redisson.api.RAtomicLong;
+import org.redisson.api.RMap;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.map.event.MapEntryListener;
@@ -135,12 +136,38 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
         return null;
     }
 
+    @Override
+    public <T> T getItemFromHash(String key) {
+        if (key == null) {
+            return null;
+        }
+        RMap<String, CacheElement> map = redisClient.getMap(key);
+        CacheElement cacheElement = map.get(key);
+        if (cacheElement != null && cacheElement.getData() != null) {
+            return (T) cacheElement.getData();
+        }
+        return null;
+    }
+
     public void addItemToCache(String cacheName, String key, Object value, Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
         CentralCacheType centralCacheType = getCacheType(cacheName);
         insertIntoCentralCache(cacheName, key, value, timeToLive, timeToIdle, timeUnit);
         if (centralCacheType == CentralCacheType.STREAM_SYNCED_LOCAL) {
             sendCacheClearMessage(cacheName);
         }
+    }
+
+    @Override
+    public void addItemToHash(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
+        RMap<String, CacheElement> map = redisClient.getMap(key);
+        map.put(key, new CacheElement(value, instanceID));
+        map.expire(Duration.of(timeToLive, timeUnit.toChronoUnit()));
+    }
+
+    @Override
+    public void expireCache(String cacheName, Long timeToLive, TimeUnit timeUnit) {
+        RMapCache<String, CacheElement> map = redisClient.getMapCache(cacheName);
+        map.expire(Duration.of(timeToLive, timeUnit.toChronoUnit()));
     }
 
     @Override

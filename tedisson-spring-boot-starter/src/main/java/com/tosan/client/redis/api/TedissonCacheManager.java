@@ -41,6 +41,12 @@ public interface TedissonCacheManager {
     <T> T getItemFromCache(String cacheName, String key);
 
     /**
+     * @param key Hash key
+     * @return value
+     */
+    <T> T getItemFromHash(String key);
+
+    /**
      * @param cacheName Cache name
      * @param key       Item key
      * @param value     Item value
@@ -56,6 +62,23 @@ public interface TedissonCacheManager {
      * @param timeUnit   Time unit for time to live and time to idle
      */
     void addItemToCache(String cacheName, String key, Object value, Long timeToLive, TimeUnit timeUnit);
+
+    /**
+     * @param key        Hash key
+     * @param value      Value
+     * @param timeToLive Item time to live. Item expired when time to live is overed and removed listener raised when
+     *                   next time item get from cache
+     * @param timeUnit   Time unit for time to live and time to idle
+     */
+    void addItemToHash(String key, Object value, Long timeToLive, TimeUnit timeUnit);
+
+    /**
+     * Redis supports this feature, but the Local Cache does not.
+     * @param cacheName      Cache name
+     * @param timeToLive Cache time to live. All items expire after a timeToLive period from now.
+     * @param timeUnit   Time unit for time to live and time to idle
+     */
+    void expireCache(String cacheName, Long timeToLive, TimeUnit timeUnit);
 
     /**
      * @param cacheName  Cache name
