@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.tosan.client.redis</groupId>
         <artifactId>tedisson</artifactId>
-        <version>1.6.0</version>
+        <version>1.6.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>tedisson-spring-boot-sample</artifactId>
