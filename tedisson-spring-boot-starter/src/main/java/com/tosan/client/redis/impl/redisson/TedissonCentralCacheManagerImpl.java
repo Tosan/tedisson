@@ -160,8 +160,26 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     @Override
     public void addItemToHash(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
         RMap<String, CacheElement> map = redisClient.getMap(key);
-        map.put(key, new CacheElement(value, instanceID));
+        map.fastPut(key, new CacheElement(value, instanceID));
         map.expire(Duration.of(timeToLive, timeUnit.toChronoUnit()));
+    }
+
+    @Override
+    public void removeItemFromHash(String key) {
+        RMap<String, CacheElement> map = redisClient.getMap(key);
+        map.fastRemove(key);
+    }
+
+    @Override
+    public void replaceHashItem(String key, Object value) {
+        RMap<String, CacheElement> map = redisClient.getMap(key);
+        map.fastReplace(key, new CacheElement(value, instanceID));
+    }
+
+    @Override
+    public boolean isKeyInHash(String key) {
+        RMap<String, CacheElement> map = redisClient.getMap(key);
+        return map.get(key) != null;
     }
 
     @Override

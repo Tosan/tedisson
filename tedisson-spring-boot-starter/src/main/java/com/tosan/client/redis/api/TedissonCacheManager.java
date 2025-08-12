@@ -73,8 +73,26 @@ public interface TedissonCacheManager {
     void addItemToHash(String key, Object value, Long timeToLive, TimeUnit timeUnit);
 
     /**
+     * @param key Hash key
+     */
+    void removeItemFromHash(String key);
+
+    /**
+     * @param key   Hash key
+     * @param value Item new value
+     */
+    void replaceHashItem(String key, Object value);
+
+    /**
+     * @param key Hash key
+     * @return Whether item exist in cache or not
+     */
+    boolean isKeyInHash(String key);
+
+    /**
      * Redis supports this feature, but the Local Cache does not.
-     * @param cacheName      Cache name
+     *
+     * @param cacheName  Cache name
      * @param timeToLive Cache time to live. All items expire after a timeToLive period from now.
      * @param timeUnit   Time unit for time to live and time to idle
      */

@@ -59,6 +59,21 @@ public class TedissonLocalCacheManagerImpl extends TedissonCacheManagerBase impl
     }
 
     @Override
+    public void removeItemFromHash(String key) {
+        localCacheManager.removeItemFromCache(key, key);
+    }
+
+    @Override
+    public void replaceHashItem(String key, Object value) {
+        localCacheManager.replaceCacheItem(key, key, value);
+    }
+
+    @Override
+    public boolean isKeyInHash(String key) {
+        return localCacheManager.isKeyInCache(key, key);
+    }
+
+    @Override
     public void expireCache(String cacheName, Long timeToLive, TimeUnit timeUnit) {
         //Not supported
     }
