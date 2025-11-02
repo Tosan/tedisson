@@ -53,10 +53,33 @@ public class TedissonLocalCacheManagerImpl extends TedissonCacheManagerBase impl
     }
 
     @Override
+    public void addItemsToCache(String cacheName, Map<String, Object> items) {
+        for (Map.Entry<String, Object> entry : items.entrySet()) {
+            localCacheManager.addItemToCache(cacheName, entry.getKey(), entry.getValue());
+        }
+    }
+
+    @Override
+    public void addItemsToCache(String cacheName, Map<String, Object> items, Long timeToLive, TimeUnit timeUnit) {
+        for (Map.Entry<String, Object> entry : items.entrySet()) {
+            localCacheManager.addItemToCache(cacheName, entry.getKey(), entry.getValue(), timeToLive, timeUnit);
+        }
+    }
+
+    @Override
     public void addItemToHash(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
         localCacheManager.createCache(key);
         localCacheManager.addItemToCache(key, key, value, timeToLive, timeUnit);
     }
+
+    @Override
+    public void addItemsToHash(Map<String, Object> items, Long timeToLive, TimeUnit timeUnit) {
+        for (Map.Entry<String, Object> entry : items.entrySet()) {
+            localCacheManager.createCache(entry.getKey());
+            localCacheManager.addItemToCache(entry.getKey(), entry.getKey(), entry.getValue(), timeToLive, timeUnit);
+        }
+    }
+
 
     @Override
     public void removeItemFromHash(String key) {
@@ -81,6 +104,13 @@ public class TedissonLocalCacheManagerImpl extends TedissonCacheManagerBase impl
     @Override
     public void addItemToCache(String cacheName, String key, Object value, Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
         localCacheManager.addItemToCache(cacheName, key, value, timeToLive, timeToIdle, timeUnit);
+    }
+
+    @Override
+    public void addItemsToCache(String cacheName, Map<String, Object> items, Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
+        for (Map.Entry<String, Object> entry : items.entrySet()) {
+            localCacheManager.addItemToCache(cacheName, entry.getKey(), entry.getValue(), timeToLive, timeToIdle, timeUnit);
+        }
     }
 
     @Override

@@ -22,10 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.redisson.api.RAtomicLong;
-import org.redisson.api.RMap;
-import org.redisson.api.RMapCache;
-import org.redisson.api.RedissonClient;
+import org.redisson.api.*;
 import org.redisson.api.map.event.MapEntryListener;
 import org.redisson.spring.cache.RedissonSpringCacheManager;
 import org.springframework.cache.CacheManager;
@@ -149,9 +146,51 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
         return null;
     }
 
+    @Override
+    public void addItemsToCache(String cacheName, Map<String, Object> items) {
+        RBatch batch = redisClient.createBatch();
+        RMapCacheAsync<Object, Object> map = batch.getMapCache(cacheName);
+        for (Map.Entry<String, Object> item : items.entrySet()) {
+            map.fastPutAsync(item.getKey(), new CacheElement(item.getValue(), instanceID));
+        }
+        batch.execute();
+        CentralCacheType centralCacheType = getCacheType(cacheName);
+        if (centralCacheType == CentralCacheType.STREAM_SYNCED_LOCAL) {
+            sendCacheClearMessage(cacheName);
+        }
+    }
+
+    @Override
+    public void addItemsToCache(String cacheName, Map<String, Object> items, Long timeToLive, TimeUnit timeUnit) {
+        RBatch batch = redisClient.createBatch();
+        RMapCacheAsync<Object, Object> map = batch.getMapCache(cacheName);
+        for (Map.Entry<String, Object> item : items.entrySet()) {
+            map.fastPutAsync(item.getKey(), new CacheElement(item.getValue(), instanceID), timeToLive, timeUnit);
+        }
+        batch.execute();
+        CentralCacheType centralCacheType = getCacheType(cacheName);
+        if (centralCacheType == CentralCacheType.STREAM_SYNCED_LOCAL) {
+            sendCacheClearMessage(cacheName);
+        }
+    }
+
     public void addItemToCache(String cacheName, String key, Object value, Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
         CentralCacheType centralCacheType = getCacheType(cacheName);
         insertIntoCentralCache(cacheName, key, value, timeToLive, timeToIdle, timeUnit);
+        if (centralCacheType == CentralCacheType.STREAM_SYNCED_LOCAL) {
+            sendCacheClearMessage(cacheName);
+        }
+    }
+
+    @Override
+    public void addItemsToCache(String cacheName, Map<String, Object> items, Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
+        RBatch batch = redisClient.createBatch();
+        RMapCacheAsync<Object, Object> map = batch.getMapCache(cacheName);
+        for (Map.Entry<String, Object> item : items.entrySet()) {
+            map.fastPutAsync(item.getKey(), new CacheElement(item.getValue(), instanceID), timeToLive, timeUnit);
+        }
+        batch.execute();
+        CentralCacheType centralCacheType = getCacheType(cacheName);
         if (centralCacheType == CentralCacheType.STREAM_SYNCED_LOCAL) {
             sendCacheClearMessage(cacheName);
         }
@@ -162,6 +201,17 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
         RMap<String, CacheElement> map = redisClient.getMap(key);
         map.fastPut(key, new CacheElement(value, instanceID));
         map.expire(Duration.of(timeToLive, timeUnit.toChronoUnit()));
+    }
+
+    @Override
+    public void addItemsToHash(Map<String, Object> items, Long timeToLive, TimeUnit timeUnit) {
+        RBatch batch = redisClient.createBatch();
+        for (Map.Entry<String, Object> item : items.entrySet()) {
+            RMapAsync<String, CacheElement> map = batch.getMap(item.getKey());
+            map.fastPutAsync(item.getKey(), new CacheElement(item.getValue(), instanceID));
+            map.expireAsync(Duration.of(timeToLive, timeUnit.toChronoUnit()));
+        }
+        batch.execute();
     }
 
     @Override

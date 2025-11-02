@@ -54,6 +54,13 @@ public interface TedissonCacheManager {
     void addItemToCache(String cacheName, String key, Object value);
 
     /**
+     * Batch Insert
+     * @param cacheName Cache name
+     * @param items     Map of (item key,item value)
+     */
+    void addItemsToCache(String cacheName, Map<String, Object> items);
+
+    /**
      * @param cacheName  Cache name
      * @param key        Item key
      * @param value      Item value
@@ -64,6 +71,16 @@ public interface TedissonCacheManager {
     void addItemToCache(String cacheName, String key, Object value, Long timeToLive, TimeUnit timeUnit);
 
     /**
+     * Batch Insert
+     * @param cacheName  Cache name
+     * @param items      Map of (item key,item value)
+     * @param timeToLive Item time to live. Item expired when time to live is overed and removed listener raised when
+     *                   next time item get from cache
+     * @param timeUnit   Time unit for time to live and time to idle
+     */
+    void addItemsToCache(String cacheName, Map<String, Object> items, Long timeToLive, TimeUnit timeUnit);
+
+    /**
      * @param key        Hash key
      * @param value      Value
      * @param timeToLive Item time to live. Item expired when time to live is overed and removed listener raised when
@@ -71,6 +88,15 @@ public interface TedissonCacheManager {
      * @param timeUnit   Time unit for time to live and time to idle
      */
     void addItemToHash(String key, Object value, Long timeToLive, TimeUnit timeUnit);
+
+    /**
+     * Batch Insert
+     * @param items      Map of (item key,item value)
+     * @param timeToLive Item time to live. Item expired when time to live is overed and removed listener raised when
+     *                   next time item get from cache
+     * @param timeUnit   Time unit for time to live and time to idle
+     */
+    void addItemsToHash(Map<String, Object> items, Long timeToLive, TimeUnit timeUnit);
 
     /**
      * @param key Hash key
@@ -109,6 +135,18 @@ public interface TedissonCacheManager {
      * @param timeUnit   Time unit for time to live and time to idle
      */
     void addItemToCache(String cacheName, String key, Object value, Long timeToLive, Long timeToIdle, TimeUnit timeUnit);
+
+    /**
+     * Batch Insert
+     * @param cacheName  Cache name
+     * @param items      Map of (item key,item value)
+     * @param timeToLive Item time to live. Item expired when time to live is overed and removed listener raised when
+     *                   next time item get from cache
+     * @param timeToIdle Item time to idle. Item expired when time to idle is overed and removed listener raised when
+     *                   next time item get from cache
+     * @param timeUnit   Time unit for time to live and time to idle
+     */
+    void addItemsToCache(String cacheName, Map<String, Object> items, Long timeToLive, Long timeToIdle, TimeUnit timeUnit);
 
     /**
      * @param cacheName Cache name
