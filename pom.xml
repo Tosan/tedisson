@@ -12,7 +12,7 @@
     <artifactId>tedisson</artifactId>
     <packaging>pom</packaging>
     <name>tedisson</name>
-    <version>1.7.1-SNAPSHOT</version>
+    <version>1.8.1-SNAPSHOT</version>
 
     <description>
         This project provides a Redisson Spring-Boot Starter that simplifies the integration of Redis into
