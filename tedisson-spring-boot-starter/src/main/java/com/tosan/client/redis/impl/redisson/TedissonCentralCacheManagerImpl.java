@@ -198,44 +198,48 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
 
     @Override
     public void addItemToHash(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
-        RMap<String, CacheElement> map = redisClient.getMap(key);
-        map.fastPut(key, new CacheElement(value, instanceID));
-        map.expire(Duration.of(timeToLive, timeUnit.toChronoUnit()));
+        RBucket<CacheElement> bucket = redisClient.getBucket(key);
+        bucket.set(new CacheElement(value, instanceID), Duration.of(timeToLive, timeUnit.toChronoUnit()));
     }
 
     @Override
     public void addItemsToHash(Map<String, Object> items, Long timeToLive, TimeUnit timeUnit) {
         RBatch batch = redisClient.createBatch();
         for (Map.Entry<String, Object> item : items.entrySet()) {
-            RMapAsync<String, CacheElement> map = batch.getMap(item.getKey());
-            map.fastPutAsync(item.getKey(), new CacheElement(item.getValue(), instanceID));
-            map.expireAsync(Duration.of(timeToLive, timeUnit.toChronoUnit()));
+            RBucket<CacheElement> bucket = redisClient.getBucket(item.getKey());
+            bucket.setAsync(new CacheElement(item.getValue(), instanceID), Duration.of(timeToLive, timeUnit.toChronoUnit()));
         }
         batch.execute();
     }
 
     @Override
     public void removeItemFromHash(String key) {
-        RMap<String, CacheElement> map = redisClient.getMap(key);
-        map.fastRemove(key);
+        RBucket<CacheElement> bucket = redisClient.getBucket(key);
+        bucket.delete();
     }
 
     @Override
     public void replaceHashItem(String key, Object value) {
-        RMap<String, CacheElement> map = redisClient.getMap(key);
-        map.fastReplace(key, new CacheElement(value, instanceID));
+        RBucket<CacheElement> bucket = redisClient.getBucket(key);
+        bucket.setAsync(new CacheElement(value, instanceID));
     }
 
     @Override
     public boolean isKeyInHash(String key) {
-        RMap<String, CacheElement> map = redisClient.getMap(key);
-        return map.get(key) != null;
+        RBucket<CacheElement> bucket = redisClient.getBucket(key);
+        return bucket.isExists();
     }
 
     @Override
     public void expireCache(String cacheName, Long timeToLive, TimeUnit timeUnit) {
         RMapCache<String, CacheElement> map = redisClient.getMapCache(cacheName);
         map.expire(Duration.of(timeToLive, timeUnit.toChronoUnit()));
+    }
+
+    @Override
+    public void expireCacheAsync(String cacheName, Long timeToLive, TimeUnit timeUnit) {
+        RMapCache<String, CacheElement> map = redisClient.getMapCache(cacheName);
+        map.expireAsync(Duration.of(timeToLive, timeUnit.toChronoUnit()));
     }
 
     @Override
@@ -276,13 +280,17 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
 
     public void insertIntoCentralCache(String cacheName, String key, Object value, Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
         RMapCache<String, CacheElement> map = redisClient.getMapCache(cacheName);
-        if (timeToLive == null) {
-            timeToLive = 0L;
-        }
         if (timeToIdle == null) {
             timeToIdle = 0L;
         }
-        map.fastPut(key, new CacheElement(value, instanceID), timeToLive, timeUnit, timeToIdle, timeUnit);
+        if (timeToLive == null) {
+            timeToLive = 0L;
+        }
+        if (timeToIdle == 0 && timeToLive == 0) {
+            map.fastPut(key, new CacheElement(value, instanceID));
+        } else {
+            map.fastPut(key, new CacheElement(value, instanceID), timeToLive, timeUnit, timeToIdle, timeUnit);
+        }
     }
 
     public void replaceCacheItem(String cacheName, String key, Object value) {

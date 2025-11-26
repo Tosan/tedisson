@@ -102,6 +102,11 @@ public class TedissonLocalCacheManagerImpl extends TedissonCacheManagerBase impl
     }
 
     @Override
+    public void expireCacheAsync(String cacheName, Long timeToLive, TimeUnit timeUnit) {
+        //Not supported
+    }
+
+    @Override
     public void addItemToCache(String cacheName, String key, Object value, Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
         localCacheManager.addItemToCache(cacheName, key, value, timeToLive, timeToIdle, timeUnit);
     }

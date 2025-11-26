@@ -117,12 +117,21 @@ public interface TedissonCacheManager {
 
     /**
      * Redis supports this feature, but the Local Cache does not.
-     *
+     * At least one item must exist in the cache when this method is called.
      * @param cacheName  Cache name
      * @param timeToLive Cache time to live. All items expire after a timeToLive period from now.
      * @param timeUnit   Time unit for time to live and time to idle
      */
     void expireCache(String cacheName, Long timeToLive, TimeUnit timeUnit);
+
+    /**
+     * Redis supports this feature, but the Local Cache does not.
+     * At least one item must exist in the cache when this method is called.
+     * @param cacheName  Cache name
+     * @param timeToLive Cache time to live. All items expire after a timeToLive period from now.
+     * @param timeUnit   Time unit for time to live and time to idle
+     */
+    void expireCacheAsync(String cacheName, Long timeToLive, TimeUnit timeUnit);
 
     /**
      * @param cacheName  Cache name

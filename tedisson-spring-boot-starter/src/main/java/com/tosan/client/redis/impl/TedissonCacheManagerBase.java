@@ -38,7 +38,6 @@ public abstract class TedissonCacheManagerBase {
      */
     public void createCache(String cacheName) {
         CacheConfig cacheConfig = new CacheConfig();
-        cacheConfig.setMaxSize(Integer.MAX_VALUE);
         createCache(cacheName, cacheConfig);
     }
 
