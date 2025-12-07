@@ -138,8 +138,11 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
         if (key == null) {
             return null;
         }
-        RMap<String, CacheElement> map = redisClient.getMap(key);
-        CacheElement cacheElement = map.get(key);
+        RBucket<CacheElement> bucket = redisClient.getBucket(key);
+        if (bucket == null) {
+            return null;
+        }
+        CacheElement cacheElement = bucket.get();
         if (cacheElement != null && cacheElement.getData() != null) {
             return (T) cacheElement.getData();
         }
