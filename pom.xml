@@ -12,7 +12,7 @@
     <artifactId>tedisson</artifactId>
     <packaging>pom</packaging>
     <name>tedisson</name>
-    <version>1.9.1-SNAPSHOT</version>
+    <version>1.9.1</version>
 
     <description>
         This project provides a Redisson Spring-Boot Starter that simplifies the integration of Redis into
@@ -46,7 +46,7 @@
         <connection>scm:git:https://github.com/Tosan/tedisson.git</connection>
         <developerConnection>scm:git:https://github.com/Tosan/tedisson.git</developerConnection>
         <url>https://github.com/Tosan/tedisson</url>
-        <tag>HEAD</tag>
+        <tag>v1.9.1</tag>
     </scm>
 
     <properties>
