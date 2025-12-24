@@ -9,6 +9,7 @@ import com.tosan.client.redis.api.SpringCacheConfig;
 import com.tosan.client.redis.api.listener.CacheListener;
 import com.tosan.client.redis.api.listener.CaffeineCacheListener;
 import com.tosan.client.redis.enumuration.LocalCacheProvider;
+import com.tosan.client.redis.exception.TedissonRuntimeException;
 import com.tosan.client.redis.impl.localCacheManager.LocalCacheManagerBase;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -155,7 +156,11 @@ public class CaffeineCacheManager extends LocalCacheManagerBase implements Local
             newCaffeineElement.setValue(1L);
             return newCaffeineElement;
         }
-        element.setValue((long) element.getValue() + 1);
+        Object value = element.getValue();
+        if (!(value instanceof Number)) {
+            throw new TedissonRuntimeException("Value must be numeric");
+        }
+        element.setValue(((Number) value).longValue() + 1);
         return element;
     }
 

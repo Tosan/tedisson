@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-
 class LocalCacheManagerITest extends BaseITest {
 
     public static final String CACHE_WITH_SIZE = "CACHE_WITH_SIZE";
@@ -33,7 +32,6 @@ class LocalCacheManagerITest extends BaseITest {
         Assertions.assertTrue(localCacheManager.isCacheExist(TEST_WITH_EXPIRY_TTL));
         Assertions.assertTrue(localCacheManager.isCacheExist(TEST_WITH_EXPIRY_TTL_TTI));
     }
-
 
     @Test
     void testClearCache() {
@@ -303,6 +301,36 @@ class LocalCacheManagerITest extends BaseITest {
         localCacheManager.expireAtomicItem(cacheName, "atomicKey", 2L, TimeUnit.SECONDS);
         Thread.sleep(3000);
         Assertions.assertEquals(1, localCacheManager.incrementAndGetAtomicItem(cacheName, "atomicKey"));
+    }
+
+    @Test
+    void testIncrementAtomicIntegerValueItem() {
+        String cacheName = "testIncrementAtomicIntegerValueItem";
+        String key = "atomicKey";
+        localCacheManager.createCache(cacheName);
+        Integer item = Integer.valueOf(1);
+        localCacheManager.addItemToCache(cacheName, key, item);
+        Assertions.assertEquals(2, localCacheManager.incrementAndGetAtomicItem(cacheName, key));
+    }
+
+    @Test
+    void testIncrementAtomicLongValueItem() {
+        String cacheName = "testIncrementAtomicLongValueItem";
+        String key = "atomicKey";
+        localCacheManager.createCache(cacheName);
+        Long item = Long.valueOf(1);
+        localCacheManager.addItemToCache(cacheName, key, item);
+        Assertions.assertEquals(2, localCacheManager.incrementAndGetAtomicItem(cacheName, key));
+    }
+
+    @Test
+    void testIncrementAtomicShortValueItem() {
+        String cacheName = "testIncrementAtomicShortValueItem";
+        String key = "atomicKey";
+        localCacheManager.createCache(cacheName);
+        Short item = Short.valueOf((short) 1);
+        localCacheManager.addItemToCache(cacheName, key, item);
+        Assertions.assertEquals(2, localCacheManager.incrementAndGetAtomicItem(cacheName, key));
     }
 
     @Test
