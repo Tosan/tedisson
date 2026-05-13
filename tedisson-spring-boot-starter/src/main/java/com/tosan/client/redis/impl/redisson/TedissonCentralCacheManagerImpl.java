@@ -85,7 +85,9 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     public void createCache(String cacheName, List<CacheListener> listener, CacheExpiryPolicy cacheExpiryPolicy,
                             int maxSize, CentralCacheTypeConfig centralCacheTypeConfig) {
         RMapCache<String, CacheElement> map = redisClient.getMapCache(cacheName);
-        map.setMaxSize(maxSize);
+        if (maxSize != 0) {
+            map.setMaxSize(maxSize);
+        }
         if (CollectionUtils.isNotEmpty(listener)) {
             for (CacheListener cacheListener : listener) {
                 addCacheListener(cacheName, cacheListener);
