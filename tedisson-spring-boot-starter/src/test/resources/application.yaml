@@ -9,11 +9,12 @@ tedisson:
   local:
     cache-provider: caffeine
   redis:
-    enabled: false
+    connection-type: single_node
+    enabled: true
     username: default
     password:
     single-server:
-      address: localhost:10501
+      address: localhost:6379
       database: 10
     stream:
       enabled: false
@@ -23,3 +24,4 @@ tedisson:
         core-pool-size: 10
         queue-capacity: 10
         max-pool-size: 20
+  redis-client-type: LETTUCE

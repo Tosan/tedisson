@@ -67,6 +67,12 @@ public class TedissonLocalCacheManagerImpl extends TedissonCacheManagerBase impl
     }
 
     @Override
+    public void addItemToHash(String key, Object value) {
+        localCacheManager.createCache(key);
+        localCacheManager.addItemToCache(key, key, value);
+    }
+
+    @Override
     public void addItemToHash(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
         localCacheManager.createCache(key);
         localCacheManager.addItemToCache(key, key, value, timeToLive, timeUnit);

@@ -14,6 +14,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.cache.annotation.EnableCaching;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @SpringBootApplication(scanBasePackages = {"com.tosan.client.redis"})
+@EnableCaching
 public class TedissonApplication implements CommandLineRunner {
 
     @Autowired

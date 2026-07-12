@@ -83,6 +83,12 @@ public interface TedissonCacheManager {
     /**
      * @param key        Hash key
      * @param value      Value
+     */
+    void addItemToHash(String key, Object value);
+
+    /**
+     * @param key        Hash key
+     * @param value      Value
      * @param timeToLive Item time to live. Item expired when time to live is overed and removed listener raised when
      *                   next time item get from cache
      * @param timeUnit   Time unit for time to live and time to idle

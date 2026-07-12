@@ -97,6 +97,7 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
             addCacheExpirationConfig(cacheName, cacheExpiryPolicy);
         }
         if (centralCacheTypeConfig != null && centralCacheTypeConfig.getCentralCacheType() != null) {
+            setCacheType(cacheName, centralCacheTypeConfig);
             LocalCacheConfig cacheConfig = new LocalCacheConfig();
             cacheConfig.setMaxSize(maxSize);
             cacheConfig.setExpiryPolicy(cacheExpiryPolicy);
@@ -199,6 +200,12 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
         if (centralCacheType == CentralCacheType.STREAM_SYNCED_LOCAL) {
             sendCacheClearMessage(cacheName);
         }
+    }
+
+    @Override
+    public void addItemToHash(String key, Object value) {
+        RBucket<CacheElement> bucket = redisClient.getBucket(key);
+        bucket.set(new CacheElement(value, instanceID));
     }
 
     @Override
@@ -476,10 +483,6 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     private long getRemainingTtl(String cacheName, String key) {
         RMapCache<String, CacheElement> map = redisClient.getMapCache(cacheName);
         return map.remainTimeToLive(key);
-    }
-
-    private CentralCacheType getCacheType(String cacheName) {
-        return centralCacheTypeMap.get(cacheName) != null ? centralCacheTypeMap.get(cacheName).getCentralCacheType() : null;
     }
 
     private boolean hasCacheRemovedListener(CentralCacheTypeConfig centralCacheTypeConfig) {

@@ -3,6 +3,7 @@ package com.tosan.client.redis.impl;
 import com.tosan.client.redis.api.CacheExpiryPolicy;
 import com.tosan.client.redis.cacheconfig.CacheConfig;
 import com.tosan.client.redis.cacheconfig.CentralCacheTypeConfig;
+import com.tosan.client.redis.enumuration.CentralCacheType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -101,6 +102,14 @@ public abstract class TedissonCacheManagerBase {
     public void updateItemExpiration(String cacheName, String key, Long timeToLive,
                                      TimeUnit timeUnit) {
         updateItemExpiration(cacheName, key, timeToLive, null, timeUnit);
+    }
+
+    public CentralCacheType getCacheType(String cacheName) {
+        return centralCacheTypeMap.get(cacheName) != null ? centralCacheTypeMap.get(cacheName).getCentralCacheType() : null;
+    }
+
+    public void setCacheType(String cacheName, CentralCacheTypeConfig centralCacheTypeConfig) {
+        centralCacheTypeMap.put(cacheName, centralCacheTypeConfig);
     }
 
     public String getInstanceID() {

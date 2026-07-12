@@ -9,6 +9,10 @@ import com.tosan.client.redis.impl.TedissonLocalCacheManagerImpl;
 import com.tosan.client.redis.impl.localCacheManager.LocalCacheManagerBase;
 import com.tosan.client.redis.impl.localCacheManager.caffeine.CaffeineCacheManager;
 import com.tosan.client.redis.impl.localCacheManager.ehcache.EhCacheManager;
+import com.tosan.client.redis.impl.lettuce.TedissonLettuceCacheManagerImpl;
+import com.tosan.client.redis.impl.lettuce.listener.LettuceSyncCreatedListener;
+import com.tosan.client.redis.impl.lettuce.listener.LettuceSyncRemovedListener;
+import com.tosan.client.redis.impl.lettuce.listener.LettuceSyncUpdatedListener;
 import com.tosan.client.redis.impl.redisson.TedissonCentralCacheManagerImpl;
 import com.tosan.client.redis.impl.redisson.listener.TedissonCreatedSyncListener;
 import com.tosan.client.redis.impl.redisson.listener.TedissonRemovedSyncListener;
@@ -50,31 +54,74 @@ public class TedissonAutoConfiguration {
     @Autowired(required = false)
     private List<TedissonPropertiesCustomizer> customizerList;
 
+    // -------------------------------------------------------------------------
+    // Cache manager — local only (redis disabled)
+    // -------------------------------------------------------------------------
+
     @Bean
     @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "false", matchIfMissing = true)
     public TedissonCacheManager tedissonLocalCacheManager(LocalCacheManager localCacheManager) {
         return new TedissonLocalCacheManagerImpl(localCacheManager);
     }
 
+    // -------------------------------------------------------------------------
+    // Cache manager — Redisson (default central client)
+    // Connection configured via tedisson.redis.* properties
+    // -------------------------------------------------------------------------
+
     @Bean
     @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
-    public TedissonCacheManager tedissonCentralCacheManager(RedissonClient redissonClient,
-                                                            LocalCacheManager localCacheManager,
-                                                            TedissonCreatedSyncListener createdSyncListener,
-                                                            TedissonRemovedSyncListener removedSyncListener,
-                                                            TedissonUpdatedSyncListener updatedSyncListener,
-                                                            Optional<MessageQueueManager> messageQueueManager) {
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
+    public TedissonCacheManager tedissonCentralRedissonCacheManager(
+            LocalCacheManager localCacheManager,
+            RedissonClient redissonClient,
+            Optional<TedissonCreatedSyncListener> createdSyncListener,
+            Optional<TedissonRemovedSyncListener> removedSyncListener,
+            Optional<TedissonUpdatedSyncListener> updatedSyncListener,
+            Optional<MessageQueueManager> messageQueueManager) {
         TedissonCentralCacheManagerImpl centralCacheManager = new TedissonCentralCacheManagerImpl(redissonClient);
         centralCacheManager.setLocalCacheManager(localCacheManager);
-        centralCacheManager.setCreatedSyncListener(createdSyncListener);
-        centralCacheManager.setRemovedSyncListener(removedSyncListener);
-        centralCacheManager.setUpdatedSyncListener(updatedSyncListener);
+        createdSyncListener.ifPresent(centralCacheManager::setCreatedSyncListener);
+        removedSyncListener.ifPresent(centralCacheManager::setRemovedSyncListener);
+        updatedSyncListener.ifPresent(centralCacheManager::setUpdatedSyncListener);
         messageQueueManager.ifPresent(centralCacheManager::setMessageQueueManager);
-        if (tedissonProperties != null && tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
+        if (tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
             centralCacheManager.setMessageQueueEnable(tedissonProperties.getRedis().getStream().isEnabled());
         }
         return centralCacheManager;
     }
+
+    // -------------------------------------------------------------------------
+    // Cache manager — Lettuce
+    // Connection provided by the main application via spring.data.redis.* properties.
+    // The starter does NOT create its own RedisConnectionFactory for Lettuce.
+    // -------------------------------------------------------------------------
+
+    @Bean
+    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "LETTUCE")
+    public TedissonCacheManager tedissonCentralLettuceCacheManager(
+            LocalCacheManager localCacheManager,
+            RedisConnectionFactory redisConnectionFactory,
+            Optional<LettuceSyncCreatedListener> lettuceCreatedListener,
+            Optional<LettuceSyncRemovedListener> lettuceRemovedListener,
+            Optional<LettuceSyncUpdatedListener> lettuceUpdatedListener,
+            Optional<MessageQueueManager> messageQueueManager) {
+        TedissonLettuceCacheManagerImpl lettuceCacheManager = new TedissonLettuceCacheManagerImpl(redisConnectionFactory);
+        lettuceCacheManager.setLocalCacheManager(localCacheManager);
+        lettuceCreatedListener.ifPresent(lettuceCacheManager::setCreatedSyncListener);
+        lettuceRemovedListener.ifPresent(lettuceCacheManager::setRemovedSyncListener);
+        lettuceUpdatedListener.ifPresent(lettuceCacheManager::setUpdatedSyncListener);
+        messageQueueManager.ifPresent(lettuceCacheManager::setMessageQueueManager);
+        if (tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
+            lettuceCacheManager.setMessageQueueEnable(tedissonProperties.getRedis().getStream().isEnabled());
+        }
+        return lettuceCacheManager;
+    }
+
+    // -------------------------------------------------------------------------
+    // Local cache providers
+    // -------------------------------------------------------------------------
 
     @Bean("localCacheManager")
     @Primary
@@ -97,9 +144,14 @@ public class TedissonAutoConfiguration {
         return caffeineCacheManager;
     }
 
+    // -------------------------------------------------------------------------
+    // Redisson client — only when client type is REDISSON
+    // -------------------------------------------------------------------------
+
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean(RedissonClient.class)
     @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
     public RedissonClient redissonClient() throws TedissonException {
         return new RedissonClientFactory(tedissonProperties, customizerList).getInstance();
     }
@@ -107,27 +159,68 @@ public class TedissonAutoConfiguration {
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean(RedissonClient.class)
     @ConditionalOnProperty(name = "tedisson.redis.stream.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
     public RedissonClient streamRedissonClient() throws TedissonException {
         return new RedissonClientFactory(tedissonProperties, customizerList).getInstance();
     }
 
+    // -------------------------------------------------------------------------
+    // Redisson listeners — only when client type is REDISSON
+    // -------------------------------------------------------------------------
+
     @Bean
     @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
     TedissonCreatedSyncListener createdSyncListener(LocalCacheManager localCacheManager) {
         return new TedissonCreatedSyncListener(localCacheManager);
     }
 
     @Bean
     @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
     TedissonUpdatedSyncListener updatedSyncListener(LocalCacheManager localCacheManager) {
         return new TedissonUpdatedSyncListener(localCacheManager);
     }
 
     @Bean
     @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
     TedissonRemovedSyncListener removedSyncListener(LocalCacheManager localCacheManager) {
         return new TedissonRemovedSyncListener(localCacheManager);
     }
+
+    // -------------------------------------------------------------------------
+    // Lettuce listeners — only when client type is LETTUCE
+    // -------------------------------------------------------------------------
+
+    @Bean
+    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "LETTUCE")
+    LettuceSyncCreatedListener lettuceSyncCreatedListener(LocalCacheManager localCacheManager) {
+        return new LettuceSyncCreatedListener(localCacheManager);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "LETTUCE")
+    LettuceSyncUpdatedListener lettuceSyncUpdatedListener(LocalCacheManager localCacheManager) {
+        return new LettuceSyncUpdatedListener(localCacheManager);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "LETTUCE")
+    LettuceSyncRemovedListener lettuceSyncRemovedListener(LocalCacheManager localCacheManager) {
+        return new LettuceSyncRemovedListener(localCacheManager);
+    }
+
+    // -------------------------------------------------------------------------
+    // Stream support
+    // For REDISSON: wraps RedissonClient into a RedisConnectionFactory so
+    //               Spring Boot's LettuceConnectionFactory is not created.
+    // For LETTUCE:  redissonConnectionFactory is skipped; the stream template
+    //               uses Spring Boot's RedisConnectionFactory directly.
+    // -------------------------------------------------------------------------
 
     @Bean
     @ConditionalOnProperty(prefix = "tedisson.redis.stream", name = "enabled", havingValue = "true")
@@ -144,6 +237,7 @@ public class TedissonAutoConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = "tedisson.redis.stream", name = "enabled", havingValue = "true")
+    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
     public RedissonConnectionFactory redissonConnectionFactory(RedissonClient redissonClient) {
         return new RedissonConnectionFactory(redissonClient);
     }

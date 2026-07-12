@@ -9,6 +9,10 @@ import java.io.Serializable;
  * @since 04/01/2021
  */
 public class CacheExpiryPolicy implements Serializable {
+
+    public CacheExpiryPolicy() {
+    }
+
     private static final long serialVersionUID = -1168883634273397186L;
     private Long timeToLiveSecond;
     private Long timeToIdleSecond;
