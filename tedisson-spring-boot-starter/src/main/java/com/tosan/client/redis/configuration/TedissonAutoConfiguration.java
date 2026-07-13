@@ -2,6 +2,10 @@ package com.tosan.client.redis.configuration;
 
 import com.tosan.client.redis.api.LocalCacheManager;
 import com.tosan.client.redis.api.TedissonCacheManager;
+import com.tosan.client.redis.configuration.condition.OnLettuceEnabledCondition;
+import com.tosan.client.redis.configuration.condition.OnLettuceStreamEnabledCondition;
+import com.tosan.client.redis.configuration.condition.OnRedissonEnabledCondition;
+import com.tosan.client.redis.configuration.condition.OnRedissonStreamEnabledCondition;
 import com.tosan.client.redis.configuration.redisson.TedissonProperties;
 import com.tosan.client.redis.configuration.redisson.TedissonPropertiesCustomizer;
 import com.tosan.client.redis.exception.TedissonException;
@@ -31,6 +35,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor;
@@ -70,8 +75,7 @@ public class TedissonAutoConfiguration {
     // -------------------------------------------------------------------------
 
     @Bean
-    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
+    @Conditional(OnRedissonEnabledCondition.class)
     public TedissonCacheManager tedissonCentralRedissonCacheManager(
             LocalCacheManager localCacheManager,
             RedissonClient redissonClient,
@@ -98,8 +102,7 @@ public class TedissonAutoConfiguration {
     // -------------------------------------------------------------------------
 
     @Bean
-    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "LETTUCE")
+    @Conditional(OnLettuceEnabledCondition.class)
     public TedissonCacheManager tedissonCentralLettuceCacheManager(
             LocalCacheManager localCacheManager,
             RedisConnectionFactory redisConnectionFactory,
@@ -150,16 +153,14 @@ public class TedissonAutoConfiguration {
 
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean(RedissonClient.class)
-    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
+    @Conditional(OnRedissonEnabledCondition.class)
     public RedissonClient redissonClient() throws TedissonException {
         return new RedissonClientFactory(tedissonProperties, customizerList).getInstance();
     }
 
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean(RedissonClient.class)
-    @ConditionalOnProperty(name = "tedisson.redis.stream.enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
+    @Conditional(OnRedissonStreamEnabledCondition.class)
     public RedissonClient streamRedissonClient() throws TedissonException {
         return new RedissonClientFactory(tedissonProperties, customizerList).getInstance();
     }
@@ -169,22 +170,19 @@ public class TedissonAutoConfiguration {
     // -------------------------------------------------------------------------
 
     @Bean
-    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
+    @Conditional(OnRedissonEnabledCondition.class)
     TedissonCreatedSyncListener createdSyncListener(LocalCacheManager localCacheManager) {
         return new TedissonCreatedSyncListener(localCacheManager);
     }
 
     @Bean
-    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
+    @Conditional(OnRedissonEnabledCondition.class)
     TedissonUpdatedSyncListener updatedSyncListener(LocalCacheManager localCacheManager) {
         return new TedissonUpdatedSyncListener(localCacheManager);
     }
 
     @Bean
-    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
+    @Conditional(OnRedissonEnabledCondition.class)
     TedissonRemovedSyncListener removedSyncListener(LocalCacheManager localCacheManager) {
         return new TedissonRemovedSyncListener(localCacheManager);
     }
@@ -194,22 +192,19 @@ public class TedissonAutoConfiguration {
     // -------------------------------------------------------------------------
 
     @Bean
-    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "LETTUCE")
+    @Conditional(OnLettuceEnabledCondition.class)
     LettuceSyncCreatedListener lettuceSyncCreatedListener(LocalCacheManager localCacheManager) {
         return new LettuceSyncCreatedListener(localCacheManager);
     }
 
     @Bean
-    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "LETTUCE")
+    @Conditional(OnLettuceEnabledCondition.class)
     LettuceSyncUpdatedListener lettuceSyncUpdatedListener(LocalCacheManager localCacheManager) {
         return new LettuceSyncUpdatedListener(localCacheManager);
     }
 
     @Bean
-    @ConditionalOnProperty(name = "tedisson.redis.enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "LETTUCE")
+    @Conditional(OnLettuceEnabledCondition.class)
     LettuceSyncRemovedListener lettuceSyncRemovedListener(LocalCacheManager localCacheManager) {
         return new LettuceSyncRemovedListener(localCacheManager);
     }
@@ -236,10 +231,15 @@ public class TedissonAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "tedisson.redis.stream", name = "enabled", havingValue = "true")
-    @ConditionalOnProperty(name = "tedisson.redis-client-type", havingValue = "REDISSON", matchIfMissing = true)
+    @Conditional(OnRedissonStreamEnabledCondition.class)
     public RedissonConnectionFactory redissonConnectionFactory(RedissonClient redissonClient) {
         return new RedissonConnectionFactory(redissonClient);
+    }
+
+    @Bean
+    @Conditional(OnLettuceStreamEnabledCondition.class)
+    public LettuceConnectionFactory lettuceConnectionFactory() {
+        return new LettuceConnectionFactory();
     }
 
     @Bean(name = "tedissonThreadPoolTaskExecutor", destroyMethod = "shutdown")
