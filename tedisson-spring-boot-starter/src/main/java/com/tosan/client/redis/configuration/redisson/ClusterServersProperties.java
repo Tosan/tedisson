@@ -2,7 +2,7 @@ package com.tosan.client.redis.configuration.redisson;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.redisson.api.NatMapper;
+import org.redisson.config.NatMapper;
 
 import java.util.ArrayList;
 import java.util.List;

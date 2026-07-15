@@ -1,7 +1,7 @@
 package com.tosan.client.redis.impl.lettuce.listener;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 import com.tosan.client.redis.api.LocalCacheManager;
 import com.tosan.client.redis.api.listener.CacheListener;
 import com.tosan.client.redis.impl.lettuce.LettuceCacheElement;
@@ -19,7 +19,8 @@ import org.springframework.data.redis.connection.MessageListener;
 public class LettuceSyncCreatedListener implements MessageListener, CacheListener {
 
     private final LocalCacheManager localCacheManager;
-    private final ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private final JsonMapper objectMapper = JsonMapper.builder()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
 
     public LettuceSyncCreatedListener(LocalCacheManager localCacheManager) {
         this.localCacheManager = localCacheManager;

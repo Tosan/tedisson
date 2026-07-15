@@ -51,7 +51,7 @@
 
     <properties>
         <java.version>17</java.version>
-        <redisson.version>3.52.0</redisson.version>
+        <redisson.version>4.6.1</redisson.version>
     </properties>
 
     <dependencyManagement>
@@ -68,8 +68,15 @@
             </dependency>
             <dependency>
                 <groupId>org.redisson</groupId>
-                <artifactId>redisson-spring-data-35</artifactId>
+                <artifactId>redisson-spring-data-40</artifactId>
                 <version>${redisson.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-cache</artifactId>
+                <version>${redisson.version}</version>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
