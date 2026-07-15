@@ -8,12 +8,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-@ImportAutoConfiguration(RedisAutoConfiguration.class)
+@ImportAutoConfiguration(DataRedisAutoConfiguration.class)
 public class LettuceCacheManagerITest extends BaseITest {
 
     @Autowired
