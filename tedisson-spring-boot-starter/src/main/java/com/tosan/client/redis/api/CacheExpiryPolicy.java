@@ -2,6 +2,7 @@ package com.tosan.client.redis.api;
 
 import com.tosan.client.redis.exception.TedissonRuntimeException;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -9,13 +10,13 @@ import java.io.Serializable;
  * @since 04/01/2021
  */
 public class CacheExpiryPolicy implements Serializable {
-
-    public CacheExpiryPolicy() {
-    }
-
+    @Serial
     private static final long serialVersionUID = -1168883634273397186L;
     private Long timeToLiveSecond;
     private Long timeToIdleSecond;
+
+    public CacheExpiryPolicy() {
+    }
 
     /**
      * @param timeToLiveSecond elapsed time for item expiration in second

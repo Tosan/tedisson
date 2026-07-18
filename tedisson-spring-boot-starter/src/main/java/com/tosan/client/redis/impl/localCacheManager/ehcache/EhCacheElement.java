@@ -1,5 +1,6 @@
 package com.tosan.client.redis.impl.localCacheManager.ehcache;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -8,6 +9,7 @@ import java.util.Date;
  * @since 2/9/2022
  */
 public class EhCacheElement implements Serializable, Cloneable {
+    @Serial
     private static final long serialVersionUID = 6904710213069041016L;
     private Long timeToLiveSecond;
     private Long timeToIdleSecond;

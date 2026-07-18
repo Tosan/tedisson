@@ -1,5 +1,6 @@
 package com.tosan.client.redis.impl.redisson;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -7,6 +8,7 @@ import java.io.Serializable;
  * @since 7/6/2022
  */
 public class CacheElement implements Serializable {
+    @Serial
     private static final long serialVersionUID = 4329642548497478371L;
     private final String instanceID;
     private Object data;

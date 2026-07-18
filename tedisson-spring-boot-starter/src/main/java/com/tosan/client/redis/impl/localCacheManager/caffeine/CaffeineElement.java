@@ -1,5 +1,6 @@
 package com.tosan.client.redis.impl.localCacheManager.caffeine;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -7,6 +8,7 @@ import java.io.Serializable;
  * @since 2/9/2022
  */
 public class CaffeineElement implements Serializable, Cloneable {
+    @Serial
     private static final long serialVersionUID = 6904710213069041016L;
     private Long timeToLiveSecond;
     private Long timeToIdleSecond;

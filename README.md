@@ -18,6 +18,66 @@ therefore you only need to add it as a maven dependency and enable the desired f
 </dependency>
 ```
 
+## ⚙️ Configuration Reference
+
+The starter is configured via `tedisson.*` properties in your `application.yml` (or `application.properties`).
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `tedisson.redis.enabled` | `boolean` | `false` | Enable Redis-backed caching. When `false`, only local cache is used. |
+| `tedisson.redis-client-type` | `REDISSON` / `LETTUCE` | `REDISSON` | Selects the Redis client implementation. |
+| `tedisson.local.cache-provider` | `ehcache` / `caffeine` | `ehcache` | Local cache provider when a local tier is used. |
+| `tedisson.redis.stream.enabled` | `boolean` | `false` | Enable Redis Streams for cross-node cache invalidation. Required for `StreamSyncedLocalCacheConfig`. |
+| `tedisson.redis.stream.max-message-size` | `long` | `20` | Max stream messages retained before trimming. |
+| `tedisson.redis.stream.trim-rate-second` | `int` | `3600` | Interval in seconds between stream trim operations. |
+| `tedisson.redis.stream.thread-pool.core-pool-size` | `int` | — | Core pool size for stream consumer threads. |
+| `tedisson.redis.stream.thread-pool.max-pool-size` | `int` | — | Max pool size for stream consumer threads. |
+| `tedisson.redis.stream.thread-pool.queue-capacity` | `int` | — | Queue capacity for stream consumer thread pool. |
+
+### Redis Client Type: Redisson vs Lettuce
+
+The starter supports two Redis client implementations:
+
+- **REDISSON** (default) — Uses the [Redisson](https://redisson.org) client. The starter creates and manages its own `RedissonClient` from `tedisson.redis.*` properties. Supports all Redis connection types: single node, cluster, sentinel, master/slave, and replicated.
+
+- **LETTUCE** — Uses Spring Data Redis with the [Lettuce](https://lettuce.io) driver. The starter does **not** create a `RedisConnectionFactory` — your application must provide one via standard `spring.data.redis.*` properties (Spring Boot auto-configuration handles this). Use this when your project already has a `RedisConnectionFactory` bean.
+
+To switch to Lettuce:
+```yaml
+tedisson:
+  redis:
+    enabled: true
+  redis-client-type: LETTUCE
+```
+
+When using Lettuce, configure the connection as usual:
+```yaml
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+```
+
+### Redisson Connection Types
+
+When using `redis-client-type: REDISSON`, the connection type is set via `tedisson.redis.connection-type` (`SINGLE_NODE`, `SENTINEL`, `CLUSTER`, `MASTER_SLAVE`, `REPLICATED`). Each type has its own nested properties under `tedisson.redis.*`:
+
+```yaml
+tedisson:
+  redis:
+    enabled: true
+    connection-type: SINGLE_NODE   # default
+    single-server:
+      address: "redis://localhost:6379"
+    # For cluster:
+    # connection-type: CLUSTER
+    # cluster-servers:
+    #   node-addresses:
+    #     - "redis://host1:6379"
+    #     - "redis://host2:6379"
+```
+
 ## 🚀 TedissonCacheManager Interface
 This Interface provides common functionalities of a cache.
 
@@ -88,8 +148,10 @@ By using this config one of implementation could be used.
 > tedisson.redis.enabled= true | false
 
 ### Redis implementation
-In this implementation redisson client is used for communicating with redis server.
-There are 3 type of caches in this implementation:
+When `tedisson.redis.enabled` is `true`, the `TedissonCacheManager` bean communicates with a Redis server.
+The client implementation is determined by `tedisson.redis-client-type` (`REDISSON` or `LETTUCE`).
+
+There are 3 types of caches in this implementation:
 - SharedCacheConfig (default)
 - ListenerSyncedLocalCacheConfig
 - StreamSyncedLocalCacheConfig
@@ -125,7 +187,7 @@ cacheManager.createCache("cache", cacheConfig);
 
 ##### StreamSyncedLocalCacheConfig
 In this type when an item is created, updated or deleted in redis cache an event is sent to all local caches in every node and the local cache id cleared.
-This feature uses redis stream, so stream.enabled should be true and one of redis connection type configs should be used for connecting to redis.
+This feature uses Redis Streams, so `tedisson.redis.stream.enabled` must be `true`.
 
 Example:
 ```
@@ -238,7 +300,7 @@ LocalCacheConfig:
 private CacheExpiryPolicy expiryPolicy: specify time to live and time to idle for all items in cache.
 private CacheListener cacheListener: cache items event listener
 private int maxSize = Integer.MAX_VALUE;
-private boolean needsClearCachePropagation = false: if this flag is true, whenever the clearCache function is called, a message will be sent using the redis streams to clear all caches in other nodes with the same cache name. Note that for using this feature tedisson.stream.enabled config should be true and redis connection settings must be initialized.
+private boolean needsClearCachePropagation = false: if this flag is true, whenever the clearCache function is called, a message will be sent using the redis streams to clear all caches in other nodes with the same cache name. Note that for using this feature `tedisson.redis.stream.enabled` must be `true` and redis connection settings must be initialized.
 ```
 Example:
 ```

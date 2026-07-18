@@ -1,5 +1,6 @@
 package com.tosan.client.redis.impl.lettuce;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -7,7 +8,7 @@ import java.io.Serializable;
  * @since 7/6/2022
  */
 public class LettuceCacheElement implements Serializable {
-
+    @Serial
     private static final long serialVersionUID = 4329642548497478371L;
     private String instanceID;
     private Object data;

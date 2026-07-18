@@ -126,17 +126,14 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
         if (centralCacheType == null) {
             return getFromCentralCache(cacheName, key);
         }
-        switch (centralCacheType) {
-            case SHARED:
-                return getFromCentralCache(cacheName, key);
-            case LISTENER_SYNCED_LOCAL:
-            case STREAM_SYNCED_LOCAL:
-                return getFromManagedCache(cacheName, key);
-        }
-        return null;
+        return switch (centralCacheType) {
+            case SHARED -> getFromCentralCache(cacheName, key);
+            case LISTENER_SYNCED_LOCAL, STREAM_SYNCED_LOCAL -> getFromManagedCache(cacheName, key);
+        };
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> T getItemFromHash(String key) {
         if (key == null) {
             return null;
@@ -355,9 +352,9 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     }
 
     public void addCacheListener(String cacheName, CacheListener mapListener) {
-        if (redisClient != null && (mapListener instanceof MapEntryListener)) {
+        if (redisClient != null && (mapListener instanceof MapEntryListener listener)) {
             RMapCache<String, CacheElement> map = redisClient.getMapCache(cacheName);
-            map.addListener((MapEntryListener) mapListener);
+            map.addListener(listener);
         }
     }
 
@@ -486,24 +483,21 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     }
 
     private boolean hasCacheRemovedListener(CentralCacheTypeConfig centralCacheTypeConfig) {
-        if (centralCacheTypeConfig instanceof ListenerSyncedLocalCacheConfig) {
-            ListenerSyncedLocalCacheConfig syncedLocalCacheConfig = (ListenerSyncedLocalCacheConfig) centralCacheTypeConfig;
+        if (centralCacheTypeConfig instanceof ListenerSyncedLocalCacheConfig syncedLocalCacheConfig) {
             return syncedLocalCacheConfig.isNeedRemovedListener();
         }
         return false;
     }
 
     private boolean hasCacheUpdatedListener(CentralCacheTypeConfig centralCacheTypeConfig) {
-        if (centralCacheTypeConfig instanceof ListenerSyncedLocalCacheConfig) {
-            ListenerSyncedLocalCacheConfig syncedLocalCacheConfig = (ListenerSyncedLocalCacheConfig) centralCacheTypeConfig;
+        if (centralCacheTypeConfig instanceof ListenerSyncedLocalCacheConfig syncedLocalCacheConfig) {
             return syncedLocalCacheConfig.isNeedUpdatedListener();
         }
         return false;
     }
 
     private boolean hasCacheCreatedListener(CentralCacheTypeConfig centralCacheTypeConfig) {
-        if (centralCacheTypeConfig instanceof ListenerSyncedLocalCacheConfig) {
-            ListenerSyncedLocalCacheConfig syncedLocalCacheConfig = (ListenerSyncedLocalCacheConfig) centralCacheTypeConfig;
+        if (centralCacheTypeConfig instanceof ListenerSyncedLocalCacheConfig syncedLocalCacheConfig) {
             return syncedLocalCacheConfig.isNeedCreatedListener();
         }
         return false;

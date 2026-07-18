@@ -30,6 +30,7 @@ import org.redisson.spring.data.connection.RedissonConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -50,12 +51,13 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @author R.Mehri
  * @since 12/26/2022
  */
-@Configuration
+@AutoConfiguration
 @EnableConfigurationProperties({TedissonProperties.class})
 public class TedissonAutoConfiguration {
 
     @Autowired
     private TedissonProperties tedissonProperties;
+
     @Autowired(required = false)
     private List<TedissonPropertiesCustomizer> customizerList;
 
