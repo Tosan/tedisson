@@ -2,10 +2,9 @@ package com.tosan.client.redis.configuration.redisson;
 
 import com.tosan.client.redis.configuration.stream.StreamProperties;
 import com.tosan.client.redis.enumuration.RedisConnectionType;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.redisson.api.NameMapper;
+import lombok.*;
 import org.redisson.config.Config;
+import org.redisson.config.NameMapper;
 import org.redisson.config.SslProvider;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -16,7 +15,8 @@ import java.net.URL;
  * @since 5/30/2023
  */
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@AllArgsConstructor
 public class RedisProperties extends Config {
 
     /**
