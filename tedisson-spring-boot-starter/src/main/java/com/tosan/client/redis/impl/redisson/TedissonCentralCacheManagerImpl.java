@@ -11,6 +11,7 @@ import com.tosan.client.redis.cacheconfig.ListenerSyncedLocalCacheConfig;
 import com.tosan.client.redis.cacheconfig.LocalCacheConfig;
 import com.tosan.client.redis.enumuration.CentralCacheType;
 import com.tosan.client.redis.enumuration.LocalCacheProvider;
+import com.tosan.client.redis.enumuration.RedisCacheClient;
 import com.tosan.client.redis.exception.TedissonRuntimeException;
 import com.tosan.client.redis.impl.TedissonCacheManagerBase;
 import com.tosan.client.redis.impl.redisson.listener.TedissonCreatedSyncListener;
@@ -417,6 +418,11 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     @Override
     public Boolean isRedisEnabled() {
         return true;
+    }
+
+    @Override
+    public RedisCacheClient getRedisCacheProvider() {
+        return RedisCacheClient.REDISSON;
     }
 
     @Override

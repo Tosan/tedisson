@@ -1,13 +1,9 @@
 package com.tosan.client.redis.impl.lettuce.listener;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tosan.client.redis.api.LocalCacheManager;
-import com.tosan.client.redis.api.listener.CacheListener;
-import com.tosan.client.redis.impl.lettuce.LettuceCacheElement;
+import com.tosan.client.redis.api.listener.LettuceListener;
+import com.tosan.client.redis.enumuration.LettuceListenerEventType;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.Message;
-import org.springframework.data.redis.connection.MessageListener;
 
 /**
  * Lettuce listener for cache created events using Redis pub/sub
@@ -16,36 +12,19 @@ import org.springframework.data.redis.connection.MessageListener;
  * @since 5/24/2026
  */
 @Slf4j
-public class LettuceSyncCreatedListener implements MessageListener, CacheListener {
+public class LettuceSyncCreatedListener implements LettuceListener {
 
     private final LocalCacheManager localCacheManager;
-    private final ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public LettuceSyncCreatedListener(LocalCacheManager localCacheManager) {
         this.localCacheManager = localCacheManager;
     }
 
     @Override
-    public void onMessage(Message message, byte[] pattern) {
-        try {
-            String payload = new String(message.getBody());
-            String channel = new String(message.getChannel());
-
-            if (channel != null && channel.startsWith("cache:created:")) {
-                String[] parts = channel.split(":");
-                if (parts.length >= 4) {
-                    String cacheName = parts[2];
-                    String key = parts[3];
-                    // Extract value from payload
-                    LettuceCacheElement element = objectMapper.readValue(payload, LettuceCacheElement.class);
-                    if (element != null && !localCacheManager.isKeyInCache(cacheName, key)) {
-                        localCacheManager.addItemToCache(cacheName, key, element.getData());
-                        log.debug("Cache item created and synced to local: {} - {}", cacheName, key);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error processing cache created message", e);
+    public void onMessage(String cacheName, String key, Object value, LettuceListenerEventType eventType) {
+        if (value != null && eventType.equals(LettuceListenerEventType.CREATED)) {
+            localCacheManager.addItemToCache(cacheName, key, value);
+            log.debug("Cache item created and synced to local: {} - {}", cacheName, key);
         }
     }
 }

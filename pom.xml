@@ -31,7 +31,7 @@
     <developers>
         <developer>
             <name>Rohollah(Mehrad) Mehri</name>
-            <email>R.mehri@tosan.com</email>
+            <email>mehri.roohallah@tosan.com</email>
             <organization>Tosan</organization>
             <organizationUrl>https://www.tosan.com</organizationUrl>
         </developer>
@@ -77,6 +77,11 @@
                 <version>4.2.16.Final</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.esotericsoftware.kryo</groupId>
+                <artifactId>kryo5</artifactId>
+                <version>5.6.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
