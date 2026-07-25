@@ -210,4 +210,6 @@ public interface LocalCacheManager {
      * @return Spring Cache Manager bean for using @Cacheable
      */
     CacheManager getSpringCacheManager(List<SpringCacheConfig> cacheConfigs);
+
+    long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit);
 }

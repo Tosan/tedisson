@@ -10,6 +10,7 @@ import com.tosan.client.redis.api.listener.CacheListener;
 import com.tosan.client.redis.api.listener.CaffeineCacheListener;
 import com.tosan.client.redis.enumuration.LocalCacheProvider;
 import com.tosan.client.redis.exception.TedissonRuntimeException;
+import com.tosan.client.redis.util.CacheTtlUtil;
 import com.tosan.client.redis.impl.localCacheManager.LocalCacheManagerBase;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -29,8 +30,10 @@ import java.util.stream.Collectors;
 public class CaffeineCacheManager extends LocalCacheManagerBase implements LocalCacheManager {
 
     private final Map<String, Cache<String, CaffeineElement>> manager = new HashMap<>();
+    private final CacheTtlUtil cacheTtlUtil;
 
-    public CaffeineCacheManager() {
+    public CaffeineCacheManager(CacheTtlUtil cacheTtlUtil) {
+        this.cacheTtlUtil = cacheTtlUtil;
     }
 
     public void createCache(String cacheName, CacheListener listener, CacheExpiryPolicy cacheExpiryPolicy, long heapSize) {
@@ -336,5 +339,43 @@ public class CaffeineCacheManager extends LocalCacheManagerBase implements Local
             }
         }
         return cacheManager;
+    }
+
+    @Override
+    public long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
+        if (key == null) {
+            return CacheTtlUtil.KEY_NOT_FOUND;
+        }
+        Cache<String, CaffeineElement> cache = getCacheWithName(cacheName);
+        if (cache == null) {
+            return CacheTtlUtil.KEY_NOT_FOUND;
+        }
+        CaffeineElement element = cache.getIfPresent(key);
+        if (element == null) {
+            return CacheTtlUtil.KEY_NOT_FOUND;
+        }
+        return calculateRemainingTtl(element, timeUnit);
+    }
+
+    private long calculateRemainingTtl(CaffeineElement element, TimeUnit timeUnit) {
+        Long expirationTimeNano = element.getExpirationTimeNano();
+        Long timeToIdleSecond = element.getTimeToIdleSecond();
+        Long remainingNanos = null;
+
+        if (expirationTimeNano != null) {
+            remainingNanos = expirationTimeNano - System.nanoTime();
+        }
+        if (timeToIdleSecond != null) {
+            long idleRemainingNanos = TimeUnit.SECONDS.toNanos(timeToIdleSecond);
+            if (expirationTimeNano != null) {
+                remainingNanos = Math.min(remainingNanos, idleRemainingNanos);
+            } else {
+                remainingNanos = idleRemainingNanos;
+            }
+        }
+        if (remainingNanos == null) {
+            return CacheTtlUtil.NO_EXPIRE;
+        }
+        return cacheTtlUtil.convertNanosRemainingTtl(remainingNanos, timeUnit);
     }
 }
