@@ -680,4 +680,9 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
         }
         return cachedItems;
     }
+
+    @Override
+    public long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
+        throw new UnsupportedOperationException("getRemainingItemTtl is not supported for Lettuce cache manager yet");
+    }
 }

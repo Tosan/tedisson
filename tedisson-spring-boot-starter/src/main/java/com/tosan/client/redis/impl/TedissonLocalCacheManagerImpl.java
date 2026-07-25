@@ -237,4 +237,9 @@ public class TedissonLocalCacheManagerImpl extends TedissonCacheManagerBase impl
         localCacheConfig.setExpiryPolicy(cacheConfig.getExpiryPolicy());
         return localCacheConfig;
     }
+
+    @Override
+    public long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
+        return localCacheManager.getRemainingItemTtl(cacheName, key, timeUnit);
+    }
 }

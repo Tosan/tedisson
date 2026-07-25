@@ -13,6 +13,7 @@ import com.tosan.client.redis.enumuration.CentralCacheType;
 import com.tosan.client.redis.enumuration.LocalCacheProvider;
 import com.tosan.client.redis.enumuration.RedisCacheClient;
 import com.tosan.client.redis.exception.TedissonRuntimeException;
+import com.tosan.client.redis.util.CacheTtlUtil;
 import com.tosan.client.redis.impl.TedissonCacheManagerBase;
 import com.tosan.client.redis.impl.redisson.listener.TedissonCreatedSyncListener;
 import com.tosan.client.redis.impl.redisson.listener.TedissonRemovedSyncListener;
@@ -54,8 +55,11 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     private MessageQueueManager messageQueueManager;
     private boolean messageQueueEnable = false;
 
-    public TedissonCentralCacheManagerImpl(RedissonClient redisClient) {
+    private final CacheTtlUtil cacheTtlUtil;
+
+    public TedissonCentralCacheManagerImpl(RedissonClient redisClient, CacheTtlUtil cacheTtlUtil) {
         this.redisClient = redisClient;
+        this.cacheTtlUtil = cacheTtlUtil;
     }
 
     @Override
@@ -538,5 +542,27 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
 
     private String getAtomicCacheKey(String cacheName, String key) {
         return cacheName + "_" + key;
+    }
+
+    @Override
+    public long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
+
+        if (key == null) {
+            return CacheTtlUtil.KEY_NOT_FOUND;
+        }
+        CentralCacheType centralCacheType = getCacheType(cacheName);
+        if (centralCacheType == CentralCacheType.LISTENER_SYNCED_LOCAL
+                || centralCacheType == CentralCacheType.STREAM_SYNCED_LOCAL) {
+            if (localCacheManager.isKeyInCache(cacheName, key)) {
+                return localCacheManager.getRemainingItemTtl(cacheName, key, timeUnit);
+            }
+        }
+        return getRemainingTtlFromRedis(cacheName, key, timeUnit);
+    }
+
+    private long getRemainingTtlFromRedis(String cacheName, String key, TimeUnit timeUnit) {
+
+        RMapCache<String, CacheElement> map = redisClient.getMapCache(cacheName);
+        return cacheTtlUtil.convertRedisRemainingTtl(map.remainTimeToLive(key), timeUnit);
     }
 }
