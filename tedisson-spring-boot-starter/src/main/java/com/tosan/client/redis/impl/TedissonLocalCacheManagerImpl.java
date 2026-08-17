@@ -233,7 +233,7 @@ public class TedissonLocalCacheManagerImpl extends TedissonCacheManagerBase impl
     }
 
     @Override
-    public long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
+    public Long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
         return localCacheManager.getRemainingItemTtl(cacheName, key, timeUnit);
     }
 }

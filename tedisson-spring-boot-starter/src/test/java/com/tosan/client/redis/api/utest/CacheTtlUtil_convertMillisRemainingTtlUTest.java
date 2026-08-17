@@ -17,13 +17,10 @@ class CacheTtlUtil_convertMillisRemainingTtlUTest {
         cacheTtlUtil = new CacheTtlUtil();
     }
 
-
     @Test
     void convertMillisRemainingTtl_positiveMillisecondsIdentity() {
         long remainingMs = 1500L;
-
         long result = cacheTtlUtil.convertMillisRemainingTtl(remainingMs, TimeUnit.MILLISECONDS);
-
         assertEquals(remainingMs, result);
     }
 

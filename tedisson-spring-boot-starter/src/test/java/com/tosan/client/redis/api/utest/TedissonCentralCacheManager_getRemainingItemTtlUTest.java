@@ -16,6 +16,7 @@ import org.redisson.api.RedissonClient;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -54,27 +55,21 @@ class TedissonCentralCacheManager_getRemainingItemTtlUTest {
         long redisRemainingMs = 5000L;
         when(redissonClient.getMapCache(CACHE_NAME)).thenReturn(mapCache);
         when(mapCache.remainTimeToLive(KEY)).thenReturn(redisRemainingMs);
-
-        long result = centralCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
-
+        Long result = centralCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
         assertEquals(cacheTtlUtil.convertRedisRemainingTtl(redisRemainingMs, TimeUnit.SECONDS), result);
         verify(localCacheManager, never()).getRemainingItemTtl(anyString(), anyString(), any(TimeUnit.class));
     }
 
     @Test
     void getRemainingItemTtl_syncedLocalDelegatesToLocalCacheManager() {
-        long localTtl = 42L;
+        Long localTtl = 42L;
         when(localCacheManager.isKeyInCache(CACHE_NAME, KEY)).thenReturn(true);
         when(localCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS)).thenReturn(localTtl);
-
         centralCacheManager.setCacheType(CACHE_NAME, new ListenerSyncedLocalCacheConfig(false, false, false));
-        long listenerSyncedResult = centralCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
-
+        Long listenerSyncedResult = centralCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
         assertEquals(localTtl, listenerSyncedResult);
-
         centralCacheManager.setCacheType(CACHE_NAME, new StreamSyncedLocalCacheConfig());
-        long streamSyncedResult = centralCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
-
+        Long streamSyncedResult = centralCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
         assertEquals(localTtl, streamSyncedResult);
         verify(localCacheManager, times(2)).getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
         verify(mapCache, never()).remainTimeToLive(anyString());
@@ -84,15 +79,10 @@ class TedissonCentralCacheManager_getRemainingItemTtlUTest {
     void getRemainingItemTtl_redisSentinelsPassThroughUnchanged() {
         when(redissonClient.getMapCache(CACHE_NAME)).thenReturn(mapCache);
         when(mapCache.remainTimeToLive(KEY)).thenReturn(CacheTtlUtil.KEY_NOT_FOUND);
-
-        long keyNotFoundResult = centralCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
-
+        Long keyNotFoundResult = centralCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
         assertEquals(CacheTtlUtil.KEY_NOT_FOUND, keyNotFoundResult);
-
         when(mapCache.remainTimeToLive(KEY)).thenReturn(CacheTtlUtil.NO_EXPIRE);
-
-        long noExpireResult = centralCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
-
-        assertEquals(CacheTtlUtil.NO_EXPIRE, noExpireResult);
+        Long noExpireResult = centralCacheManager.getRemainingItemTtl(CACHE_NAME, KEY, TimeUnit.SECONDS);
+        assertNull(noExpireResult);
     }
 }

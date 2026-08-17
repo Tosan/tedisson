@@ -26,9 +26,7 @@ class EhCacheManager_getRemainingItemTtlUTest {
         String key = "key";
         ehCacheManager.createCache(cacheName);
         ehCacheManager.addItemToCache(cacheName, key, "value", 60L, TimeUnit.SECONDS);
-
-        long result = ehCacheManager.getRemainingItemTtl(cacheName, key, TimeUnit.SECONDS);
-
+        Long result = ehCacheManager.getRemainingItemTtl(cacheName, key, TimeUnit.SECONDS);
         assertTrue(result > 0L);
     }
 
@@ -39,23 +37,19 @@ class EhCacheManager_getRemainingItemTtlUTest {
         ehCacheManager.createCache(cacheName);
         ehCacheManager.addItemToCache(cacheName, key, "value", 1L, TimeUnit.MILLISECONDS);
         Thread.sleep(50L);
-
-        long result = ehCacheManager.getRemainingItemTtl(cacheName, key, TimeUnit.SECONDS);
-
+        Long result = ehCacheManager.getRemainingItemTtl(cacheName, key, TimeUnit.SECONDS);
         assertEquals(0L, result);
     }
 
     @Test
     void getRemainingItemTtl_nullKeyReturnsKeyNotFound() {
-        long result = ehCacheManager.getRemainingItemTtl("any-cache", null, TimeUnit.SECONDS);
-
+        Long result = ehCacheManager.getRemainingItemTtl("any-cache", null, TimeUnit.SECONDS);
         assertEquals(CacheTtlUtil.KEY_NOT_FOUND, result);
     }
 
     @Test
     void getRemainingItemTtl_unknownCacheReturnsKeyNotFound() {
-        long result = ehCacheManager.getRemainingItemTtl("non-existent-cache-" + UUID.randomUUID(), "key", TimeUnit.SECONDS);
-
+        Long result = ehCacheManager.getRemainingItemTtl("non-existent-cache-" + UUID.randomUUID(), "key", TimeUnit.SECONDS);
         assertEquals(CacheTtlUtil.KEY_NOT_FOUND, result);
     }
 
@@ -63,9 +57,7 @@ class EhCacheManager_getRemainingItemTtlUTest {
     void getRemainingItemTtl_missingKeyReturnsKeyNotFound() {
         String cacheName = "ttl-" + UUID.randomUUID();
         ehCacheManager.createCache(cacheName);
-
-        long result = ehCacheManager.getRemainingItemTtl(cacheName, "missing-key", TimeUnit.SECONDS);
-
+        Long result = ehCacheManager.getRemainingItemTtl(cacheName, "missing-key", TimeUnit.SECONDS);
         assertEquals(CacheTtlUtil.KEY_NOT_FOUND, result);
     }
 }

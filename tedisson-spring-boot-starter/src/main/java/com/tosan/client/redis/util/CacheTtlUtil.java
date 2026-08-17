@@ -31,4 +31,3 @@ public class CacheTtlUtil {
         return timeUnit.convert(remainingMs, TimeUnit.MILLISECONDS);
     }
 }
-

@@ -370,7 +370,7 @@ public class EhCacheManager extends LocalCacheManagerBase implements LocalCacheM
     }
 
     @Override
-    public long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
+    public Long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
         if (key == null) {
             return CacheTtlUtil.KEY_NOT_FOUND;
         }
@@ -383,24 +383,17 @@ public class EhCacheManager extends LocalCacheManagerBase implements LocalCacheM
             return CacheTtlUtil.KEY_NOT_FOUND;
         }
         Date now = new Date();
-        if (isCacheItemExpired(element, now)) {
+        if (element.getExpirationTime() != null && element.getExpirationTime().before(now)) {
             return 0L;
         }
         return calculateRemainingTtl(element, now, timeUnit);
     }
 
-    private long calculateRemainingTtl(EhCacheElement element, Date now, TimeUnit timeUnit) {
-        Long remainingMs = null;
-        if (element.getExpirationTime() != null) {
-            remainingMs = element.getExpirationTime().getTime() - now.getTime();
+    private Long calculateRemainingTtl(EhCacheElement element, Date now, TimeUnit timeUnit) {
+        if (element.getExpirationTime() == null) {
+            return null;
         }
-        if (element.getMaxAllowedAccessTime() != null) {
-            long idleRemainingMs = element.getMaxAllowedAccessTime().getTime() - now.getTime();
-            remainingMs = remainingMs == null ? idleRemainingMs : Math.min(remainingMs, idleRemainingMs);
-        }
-        if (remainingMs == null) {
-            return CacheTtlUtil.NO_EXPIRE;
-        }
+        long remainingMs = element.getExpirationTime().getTime() - now.getTime();
         return cacheTtlUtil.convertMillisRemainingTtl(remainingMs, timeUnit);
     }
 }
