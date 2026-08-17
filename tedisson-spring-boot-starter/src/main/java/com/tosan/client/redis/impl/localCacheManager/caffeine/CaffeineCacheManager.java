@@ -342,7 +342,7 @@ public class CaffeineCacheManager extends LocalCacheManagerBase implements Local
     }
 
     @Override
-    public long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
+    public Long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
         if (key == null) {
             return CacheTtlUtil.KEY_NOT_FOUND;
         }
@@ -357,25 +357,12 @@ public class CaffeineCacheManager extends LocalCacheManagerBase implements Local
         return calculateRemainingTtl(element, timeUnit);
     }
 
-    private long calculateRemainingTtl(CaffeineElement element, TimeUnit timeUnit) {
+    private Long calculateRemainingTtl(CaffeineElement element, TimeUnit timeUnit) {
         Long expirationTimeNano = element.getExpirationTimeNano();
-        Long timeToIdleSecond = element.getTimeToIdleSecond();
-        Long remainingNanos = null;
-
-        if (expirationTimeNano != null) {
-            remainingNanos = expirationTimeNano - System.nanoTime();
+        if (expirationTimeNano == null) {
+            return null;
         }
-        if (timeToIdleSecond != null) {
-            long idleRemainingNanos = TimeUnit.SECONDS.toNanos(timeToIdleSecond);
-            if (expirationTimeNano != null) {
-                remainingNanos = Math.min(remainingNanos, idleRemainingNanos);
-            } else {
-                remainingNanos = idleRemainingNanos;
-            }
-        }
-        if (remainingNanos == null) {
-            return CacheTtlUtil.NO_EXPIRE;
-        }
+        long remainingNanos = expirationTimeNano - System.nanoTime();
         return cacheTtlUtil.convertNanosRemainingTtl(remainingNanos, timeUnit);
     }
 }

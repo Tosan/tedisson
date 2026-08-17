@@ -21,23 +21,19 @@ class CacheTtlUtil_convertRedisRemainingTtlUTest {
     void convertRedisRemainingTtl_positiveMillisecondsToSeconds() {
         long remainingMs = 5000L;
         TimeUnit timeUnit = TimeUnit.SECONDS;
-
         long result = cacheTtlUtil.convertRedisRemainingTtl(remainingMs, timeUnit);
-
         assertEquals(timeUnit.convert(remainingMs, TimeUnit.MILLISECONDS), result);
     }
 
     @Test
     void convertRedisRemainingTtl_keyNotFoundSentinel() {
         long result = cacheTtlUtil.convertRedisRemainingTtl(CacheTtlUtil.KEY_NOT_FOUND, TimeUnit.SECONDS);
-
         assertEquals(CacheTtlUtil.KEY_NOT_FOUND, result);
     }
 
     @Test
     void convertRedisRemainingTtl_noExpireSentinel() {
         long result = cacheTtlUtil.convertRedisRemainingTtl(CacheTtlUtil.NO_EXPIRE, TimeUnit.SECONDS);
-
         assertEquals(CacheTtlUtil.NO_EXPIRE, result);
     }
 }

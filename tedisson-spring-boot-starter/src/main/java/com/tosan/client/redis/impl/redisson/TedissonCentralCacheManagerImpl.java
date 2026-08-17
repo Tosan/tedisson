@@ -545,7 +545,7 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     }
 
     @Override
-    public long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
+    public Long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
 
         if (key == null) {
             return CacheTtlUtil.KEY_NOT_FOUND;
@@ -560,9 +560,13 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
         return getRemainingTtlFromRedis(cacheName, key, timeUnit);
     }
 
-    private long getRemainingTtlFromRedis(String cacheName, String key, TimeUnit timeUnit) {
+    private Long getRemainingTtlFromRedis(String cacheName, String key, TimeUnit timeUnit) {
 
         RMapCache<String, CacheElement> map = redisClient.getMapCache(cacheName);
-        return cacheTtlUtil.convertRedisRemainingTtl(map.remainTimeToLive(key), timeUnit);
+        long remainingTtl = cacheTtlUtil.convertRedisRemainingTtl(map.remainTimeToLive(key), timeUnit);
+        if (remainingTtl == CacheTtlUtil.NO_EXPIRE) {
+            return null;
+        }
+        return remainingTtl;
     }
 }

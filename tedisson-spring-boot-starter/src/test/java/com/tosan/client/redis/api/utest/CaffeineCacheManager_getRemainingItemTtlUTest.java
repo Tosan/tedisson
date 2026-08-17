@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CaffeineCacheManager_getRemainingItemTtlUTest {
@@ -26,29 +27,24 @@ class CaffeineCacheManager_getRemainingItemTtlUTest {
         String key = "key";
         caffeineCacheManager.createCache(cacheName);
         caffeineCacheManager.addItemToCache(cacheName, key, "value", 60L, TimeUnit.SECONDS);
-
-        long result = caffeineCacheManager.getRemainingItemTtl(cacheName, key, TimeUnit.SECONDS);
-
+        Long result = caffeineCacheManager.getRemainingItemTtl(cacheName, key, TimeUnit.SECONDS);
         assertTrue(result > 0L);
     }
 
     @Test
-    void getRemainingItemTtl_timeToIdleSecondOnly() {
+    void getRemainingItemTtl_timeToIdleOnlyReturnsNull() {
         String cacheName = "ttl-" + UUID.randomUUID();
         String key = "key";
         caffeineCacheManager.createCache(cacheName);
         caffeineCacheManager.addItemToCache(cacheName, key, "value", null, 30L, TimeUnit.SECONDS);
-
-        long result = caffeineCacheManager.getRemainingItemTtl(cacheName, key, TimeUnit.SECONDS);
-
-        assertEquals(30L, result);
+        Long result = caffeineCacheManager.getRemainingItemTtl(cacheName, key, TimeUnit.SECONDS);
+        assertNull(result);
     }
 
     @Test
     void getRemainingItemTtl_guardPathsReturnKeyNotFound() {
         String cacheName = "ttl-" + UUID.randomUUID();
         caffeineCacheManager.createCache(cacheName);
-
         assertEquals(CacheTtlUtil.KEY_NOT_FOUND,
                 caffeineCacheManager.getRemainingItemTtl(cacheName, null, TimeUnit.SECONDS));
         assertEquals(CacheTtlUtil.KEY_NOT_FOUND,

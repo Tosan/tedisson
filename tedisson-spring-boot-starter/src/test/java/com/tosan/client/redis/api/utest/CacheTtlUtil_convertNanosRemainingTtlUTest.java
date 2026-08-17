@@ -17,11 +17,9 @@ class CacheTtlUtil_convertNanosRemainingTtlUTest {
         cacheTtlUtil = new CacheTtlUtil();
     }
 
-
     @Test
     void convertNanosRemainingTtl_positiveNanosecondsConverted() {
         long remainingNanos = TimeUnit.MILLISECONDS.toNanos(2L);
-
         assertEquals(
                 TimeUnit.MICROSECONDS.convert(remainingNanos, TimeUnit.NANOSECONDS),
                 cacheTtlUtil.convertNanosRemainingTtl(remainingNanos, TimeUnit.MICROSECONDS));
