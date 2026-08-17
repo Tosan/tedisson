@@ -6,6 +6,7 @@ import com.tosan.client.redis.api.SpringCacheConfig;
 import com.tosan.client.redis.api.listener.CacheListener;
 import com.tosan.client.redis.enumuration.LocalCacheProvider;
 import com.tosan.client.redis.exception.TedissonRuntimeException;
+import com.tosan.client.redis.util.CacheTtlUtil;
 import com.tosan.client.redis.impl.localCacheManager.LocalCacheManagerBase;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -39,8 +40,10 @@ public class EhCacheManager extends LocalCacheManagerBase implements LocalCacheM
 
     public static final String EHCACHE_JSR_107_CACHING_PROVIDER = "org.ehcache.jsr107.EhcacheCachingProvider";
     private final CacheManager manager;
+    private final CacheTtlUtil cacheTtlUtil;
 
-    public EhCacheManager() {
+    public EhCacheManager(CacheTtlUtil cacheTtlUtil) {
+        this.cacheTtlUtil = cacheTtlUtil;
         try {
             CachingProvider provider = Caching.getCachingProvider(EHCACHE_JSR_107_CACHING_PROVIDER);
             manager = provider.getCacheManager();
@@ -364,5 +367,33 @@ public class EhCacheManager extends LocalCacheManagerBase implements LocalCacheM
 
     private Set<EventType> getCacheEventTypes() {
         return new HashSet<>(Arrays.asList(EventType.values()));
+    }
+
+    @Override
+    public Long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
+        if (key == null) {
+            return CacheTtlUtil.KEY_NOT_FOUND;
+        }
+        Cache<String, EhCacheElement> cache = getCacheWithName(cacheName);
+        if (cache == null) {
+            return CacheTtlUtil.KEY_NOT_FOUND;
+        }
+        EhCacheElement element = cache.get(key);
+        if (element == null) {
+            return CacheTtlUtil.KEY_NOT_FOUND;
+        }
+        Date now = new Date();
+        if (element.getExpirationTime() != null && element.getExpirationTime().before(now)) {
+            return 0L;
+        }
+        return calculateRemainingTtl(element, now, timeUnit);
+    }
+
+    private Long calculateRemainingTtl(EhCacheElement element, Date now, TimeUnit timeUnit) {
+        if (element.getExpirationTime() == null) {
+            return null;
+        }
+        long remainingMs = element.getExpirationTime().getTime() - now.getTime();
+        return cacheTtlUtil.convertMillisRemainingTtl(remainingMs, timeUnit);
     }
 }
