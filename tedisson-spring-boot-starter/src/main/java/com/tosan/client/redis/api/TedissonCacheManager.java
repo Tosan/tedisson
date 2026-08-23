@@ -322,4 +322,14 @@ public interface TedissonCacheManager {
      * @return Spring Cache Manager bean for using @Cacheable
      */
     CacheManager getSpringCacheManager(List<SpringCacheConfig> cacheConfigs);
+
+    /**
+     * @param cacheName Cache name
+     * @param key       Item key
+     * @param timeUnit  Time unit for the returned time to live
+     * @return Remaining item time to live in the specified time unit;
+     *         0 if the key does not exist or the item has already expired,
+     *         or null if the item has no expiration time
+     */
+    Long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit);
 }
