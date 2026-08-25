@@ -123,6 +123,17 @@ public interface LocalCacheManager {
     void addAllToCache(String cacheName, Map<String, Object> items);
 
     /**
+     * Adds item to hash only if it doesn't already exist.
+     *
+     * @param cacheName  Cache name
+     * @param key        Item key
+     * @param value      Item value
+     * @param timeToLive Item time to live
+     * @param timeUnit   Time unit for time to live
+     */
+    boolean addItemToHashIfAbsent(String cacheName, Object key, Object value, Long timeToLive, TimeUnit timeUnit);
+
+    /**
      * @param cacheName Cache name
      * @return The collection of cache items
      */
