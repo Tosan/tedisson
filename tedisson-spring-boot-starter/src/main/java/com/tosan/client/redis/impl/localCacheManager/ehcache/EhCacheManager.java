@@ -191,6 +191,27 @@ public class EhCacheManager extends LocalCacheManagerBase implements LocalCacheM
     }
 
     public void addItemToCache(String cacheName, Object key, Object value, Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
+        EhCacheElement ehcacheElement = createEhCacheElement(timeToLive, timeToIdle, timeUnit);
+        ehcacheElement.setValue(value);
+        manager.getCache(cacheName).put(key, ehcacheElement);
+    }
+
+    public void addAllToCache(String cacheName, Map<String, Object> items) {
+        if (MapUtils.isNotEmpty(items)) {
+            for (Map.Entry<String, Object> entry : items.entrySet()) {
+                addItemToCache(cacheName, entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    @Override
+    public boolean addItemToHashIfAbsent(String cacheName, Object key, Object value, Long timeToLive, TimeUnit timeUnit) {
+        EhCacheElement ehcacheElement = createEhCacheElement(timeToLive, null, timeUnit);
+        ehcacheElement.setValue(value);
+        return manager.getCache(cacheName).putIfAbsent(key, ehcacheElement);
+    }
+
+    private EhCacheElement createEhCacheElement(Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
         EhCacheElement ehcacheElement = new EhCacheElement();
         Date now = new Date();
         if (timeToLive != null) {
@@ -203,16 +224,7 @@ public class EhCacheManager extends LocalCacheManagerBase implements LocalCacheM
             ehcacheElement.setMaxAllowedAccessTime(maxAllowedAccessTime);
             ehcacheElement.setTimeToIdleSecond(TimeUnit.SECONDS.convert(timeToIdle, timeUnit));
         }
-        ehcacheElement.setValue(value);
-        manager.getCache(cacheName).put(key, ehcacheElement);
-    }
-
-    public void addAllToCache(String cacheName, Map<String, Object> items) {
-        if (MapUtils.isNotEmpty(items)) {
-            for (Map.Entry<String, Object> entry : items.entrySet()) {
-                addItemToCache(cacheName, entry.getKey(), entry.getValue());
-            }
-        }
+        return ehcacheElement;
     }
 
     @SuppressWarnings("unchecked")
