@@ -2,6 +2,7 @@ package com.tosan.client.redis.api;
 
 import com.tosan.client.redis.cacheconfig.CacheConfig;
 import com.tosan.client.redis.enumuration.LocalCacheProvider;
+import com.tosan.client.redis.enumuration.RedisCacheClient;
 import org.springframework.cache.CacheManager;
 
 import java.util.List;
@@ -305,6 +306,11 @@ public interface TedissonCacheManager {
      * @return redis enable
      */
     Boolean isRedisEnabled();
+
+    /**
+     * @return local cache provider
+     */
+    RedisCacheClient getRedisCacheProvider();
 
     /**
      * @return local cache provider

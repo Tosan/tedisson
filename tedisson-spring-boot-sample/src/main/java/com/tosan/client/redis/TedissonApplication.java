@@ -50,7 +50,7 @@ public class TedissonApplication implements CommandLineRunner {
         //sampleLocalCacheManager();
         //sampleCacheManagerWithLocalConfig();
         //sampleCacheManagerWithRedisConfig();
-        //sampleCacheManagerWithRedisConfigAndCacheConfig();
+        sampleCacheManagerWithRedisConfigAndCacheConfig();
         //sampleCacheManagerWithRedisConfigAndMessageQueue();
         //sampleLocalCacheManagerWithMessageQueueAndCacheClearing();
         //sampleUsingSpringCacheManager();
@@ -126,10 +126,7 @@ public class TedissonApplication implements CommandLineRunner {
         cacheConfig.setMaxSize(100);
         cacheManager.createCache("cache", cacheConfig);
         List<CacheListener> listeners = new ArrayList<>();
-        listeners.add(new SampleRedisCreatedListener());
-        listeners.add(new SampleRedisRemovedListener());
-        listeners.add(new SampleRedisUpdatedListener());
-        listeners.add(new SampleRedisExpiredListener());
+        listeners.add(new SampleLettuceListener());
         CacheConfig cacheConfig1 = new CacheConfig();
         cacheConfig.setListeners(listeners);
         cacheConfig1.setMaxSize(100);

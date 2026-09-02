@@ -31,7 +31,7 @@
     <developers>
         <developer>
             <name>Rohollah(Mehrad) Mehri</name>
-            <email>R.mehri@tosan.com</email>
+            <email>mehri.roohallah@tosan.com</email>
             <organization>Tosan</organization>
             <organizationUrl>https://www.tosan.com</organizationUrl>
         </developer>
@@ -75,6 +75,18 @@
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson-spring-cache</artifactId>
                 <version>${redisson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>4.2.16.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.esotericsoftware.kryo</groupId>
+                <artifactId>kryo5</artifactId>
+                <version>5.6.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
