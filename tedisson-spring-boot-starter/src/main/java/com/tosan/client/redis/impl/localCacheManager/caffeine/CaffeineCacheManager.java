@@ -195,14 +195,7 @@ public class CaffeineCacheManager extends LocalCacheManagerBase implements Local
     }
 
     public void addItemToCache(String cacheName, Object key, Object value, Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
-        CaffeineElement caffeineElement = new CaffeineElement();
-        if (timeToLive != null) {
-            caffeineElement.setExpirationTimeNano(System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeToLive, timeUnit));
-            caffeineElement.setTimeToLiveSecond(TimeUnit.SECONDS.convert(timeToLive, timeUnit));
-        }
-        if (timeToIdle != null) {
-            caffeineElement.setTimeToIdleSecond(TimeUnit.SECONDS.convert(timeToIdle, timeUnit));
-        }
+        CaffeineElement caffeineElement = createCaffeineElement(timeToLive, timeToIdle, timeUnit);
         caffeineElement.setValue(value);
         Cache cache = getCacheWithName(cacheName);
         if (cache != null) {
@@ -218,13 +211,36 @@ public class CaffeineCacheManager extends LocalCacheManagerBase implements Local
         }
     }
 
+    @Override
+    public boolean addItemToHashIfAbsent(String cacheName, Object key, Object value, Long timeToLive, TimeUnit timeUnit) {
+        CaffeineElement caffeineElement = createCaffeineElement(timeToLive, timeToLive, timeUnit);
+        caffeineElement.setValue(value);
+        Cache cache = getCacheWithName(cacheName);
+        if (cache != null) {
+            return cache.asMap().putIfAbsent(key, caffeineElement) == null;
+        }
+        return false;
+    }
+
+    private static CaffeineElement createCaffeineElement(Long timeToLive, Long timeToIdle, TimeUnit timeUnit) {
+        CaffeineElement caffeineElement = new CaffeineElement();
+        if (timeToLive != null) {
+            caffeineElement.setExpirationTimeNano(System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeToLive, timeUnit));
+            caffeineElement.setTimeToLiveSecond(TimeUnit.SECONDS.convert(timeToLive, timeUnit));
+        }
+        if (timeToIdle != null) {
+            caffeineElement.setTimeToIdleSecond(TimeUnit.SECONDS.convert(timeToIdle, timeUnit));
+        }
+        return caffeineElement;
+    }
+
     @SuppressWarnings("unchecked")
     public <T> List<T> getAllFromCache(String cacheName) {
         Collection<CaffeineElement> caffeineElements = getCacheWithName(cacheName).asMap().values();
         List<T> list = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(caffeineElements)) {
             List<T> values = ((List<T>) caffeineElements.stream()
-                    .map(CaffeineElement::getValue).collect(Collectors.toList()));
+                    .map(CaffeineElement::getValue).toList());
             list.addAll(values);
             return list;
         }
