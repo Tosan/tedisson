@@ -26,18 +26,22 @@ import com.tosan.client.redis.scheduler.TedissonStreamScheduler;
 import com.tosan.client.redis.stream.ConsumerListener;
 import com.tosan.client.redis.stream.MessageQueueManager;
 import com.tosan.client.redis.stream.StreamConsumerRunner;
+import com.tosan.client.redis.util.CacheTtlUtil;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.DefaultClientResources;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import com.tosan.client.redis.util.CacheTtlUtil;
 import org.redisson.api.RedissonClient;
 import org.redisson.spring.data.connection.RedissonConnectionFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.data.redis.ClientResourcesBuilderCustomizer;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
@@ -106,7 +110,7 @@ public class TedissonAutoConfiguration {
             Optional<TedissonUpdatedSyncListener> updatedSyncListener,
             Optional<MessageQueueManager> messageQueueManager,
             CacheTtlUtil cacheTtlUtil) {
-        TedissonCentralCacheManagerImpl centralCacheManager = new TedissonCentralCacheManagerImpl(redissonClient,cacheTtlUtil);
+        TedissonCentralCacheManagerImpl centralCacheManager = new TedissonCentralCacheManagerImpl(redissonClient, cacheTtlUtil);
         centralCacheManager.setLocalCacheManager(localCacheManager);
         createdSyncListener.ifPresent(centralCacheManager::setCreatedSyncListener);
         removedSyncListener.ifPresent(centralCacheManager::setRemovedSyncListener);
@@ -153,7 +157,7 @@ public class TedissonAutoConfiguration {
     @Bean("localCacheManager")
     @Primary
     @ConditionalOnProperty(name = "tedisson.local.cache-provider", havingValue = "ehcache", matchIfMissing = true)
-    public EhCacheManager ehcacheLocalCacheManager(Optional<MessageQueueManager> messageQueueManager,CacheTtlUtil cacheTtlUtil) {
+    public EhCacheManager ehcacheLocalCacheManager(Optional<MessageQueueManager> messageQueueManager, CacheTtlUtil cacheTtlUtil) {
         EhCacheManager ehCacheManager = new EhCacheManager(cacheTtlUtil);
         if (tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
             messageQueueManager.ifPresent(ehCacheManager::setMessageQueueManager);
@@ -163,7 +167,7 @@ public class TedissonAutoConfiguration {
 
     @Bean("localCacheManager")
     @ConditionalOnProperty(name = "tedisson.local.cache-provider", havingValue = "caffeine")
-    public CaffeineCacheManager caffeineLocalCacheManager(Optional<MessageQueueManager> messageQueueManager,CacheTtlUtil cacheTtlUtil) {
+    public CaffeineCacheManager caffeineLocalCacheManager(Optional<MessageQueueManager> messageQueueManager, CacheTtlUtil cacheTtlUtil) {
         CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager(cacheTtlUtil);
         if (tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
             messageQueueManager.ifPresent(caffeineCacheManager::setMessageQueueManager);
@@ -270,15 +274,22 @@ public class TedissonAutoConfiguration {
         return new RedissonConnectionFactory(redissonClient);
     }
 
+    @Bean(destroyMethod = "shutdown")
+    public ClientResources clientResources(ObjectProvider<ClientResourcesBuilderCustomizer> customizers) {
+        var clientResourcesBuilder = DefaultClientResources.builder();
+        customizers.orderedStream().forEach(customizer -> customizer.customize(clientResourcesBuilder));
+        return clientResourcesBuilder.build();
+    }
+
     @Bean
     @ConditionalOnMissingBean(LettuceConnectionFactory.class)
     @Conditional(OnLettuceEnabledCondition.class)
-    public LettuceConnectionFactory lettuceConnectionFactory(RedisProperties properties) {
-        LettuceClientConfiguration clientConfiguration = lettuceClientConfiguration(properties);
+    public LettuceConnectionFactory lettuceConnectionFactory(RedisProperties properties, ClientResources clientResources) {
+        LettuceClientConfiguration clientConfiguration = lettuceClientConfiguration(properties, clientResources);
         // Cluster
         if (properties.getCluster() != null
-                && properties.getCluster().getNodes() != null
-                && !properties.getCluster().getNodes().isEmpty()) {
+            && properties.getCluster().getNodes() != null
+            && !properties.getCluster().getNodes().isEmpty()) {
             RedisClusterConfiguration cluster =
                     new RedisClusterConfiguration(properties.getCluster().getNodes());
             if (properties.getCluster().getMaxRedirects() != null) {
@@ -306,7 +317,7 @@ public class TedissonAutoConfiguration {
         return new LettuceConnectionFactory(standalone, clientConfiguration);
     }
 
-    private LettuceClientConfiguration lettuceClientConfiguration(RedisProperties properties) {
+    private LettuceClientConfiguration lettuceClientConfiguration(RedisProperties properties, ClientResources clientResources) {
         LettuceClientConfiguration.LettuceClientConfigurationBuilder builder;
         RedisProperties.Pool pool = properties.getLettuce().getPool();
         if (pool != null) {
@@ -343,6 +354,9 @@ public class TedissonAutoConfiguration {
                     .socketOptions(socketOptions)
                     .build();
             builder.clientOptions(clientOptions);
+        }
+        if (clientResources != null) {
+            builder.clientResources(clientResources);
         }
         return builder.build();
     }
