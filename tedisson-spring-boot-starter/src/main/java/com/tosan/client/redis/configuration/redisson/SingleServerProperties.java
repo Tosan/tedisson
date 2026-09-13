@@ -18,30 +18,30 @@ public class SingleServerProperties {
     /**
      * Minimum idle subscription connection amount
      */
-    private int subscriptionConnectionMinimumIdleSize = 5;
+    private Integer subscriptionConnectionMinimumIdleSize = 5;
 
     /**
      * Redis subscription connection maximum pool size
      */
-    private int subscriptionConnectionPoolSize = 50;
+    private Integer subscriptionConnectionPoolSize = 50;
 
     /**
      * Minimum idle Redis connection amount
      */
-    private int connectionMinimumIdleSize = 24;
+    private Integer connectionMinimumIdleSize = 24;
 
     /**
      * Redis connection maximum pool size
      */
-    private int connectionPoolSize = 64;
+    private Integer connectionPoolSize = 64;
 
     /**
      * Database index used for Redis connection
      */
-    private int database = 0;
+    private Integer database = 0;
 
     /**
      * Interval in milliseconds to check DNS
      */
-    private long dnsMonitoringInterval = 5000;
+    private Long dnsMonitoringInterval = 5000L;
 }

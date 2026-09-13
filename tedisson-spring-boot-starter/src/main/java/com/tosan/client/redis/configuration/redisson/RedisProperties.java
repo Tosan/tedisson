@@ -53,19 +53,19 @@ public class RedisProperties extends Config {
      * it will be closed and removed from the pool.
      * Value in milliseconds.
      */
-    private int idleConnectionTimeout = 10000;
+    private Integer idleConnectionTimeout = 10000;
 
     /**
      * Timeout during connecting to any Redis server.
      * Value in milliseconds.
      */
-    private int connectTimeout = 10000;
+    private Integer connectTimeout = 10000;
 
     /**
      * Redis server response timeout. Starts to countdown when Redis command was successfully sent.
      * Value in milliseconds.
      */
-    private int timeout = 3000;
+    private Integer timeout = 3000;
 
     /**
      * Error will be thrown if Redis command can't be sent to Redis server after <code>retryAttempts</code>.
@@ -73,7 +73,7 @@ public class RedisProperties extends Config {
      * <p>
      * Default is <code>3</code> attempts
      */
-    private int retryAttempts = 3;
+    private Integer retryAttempts = 3;
 
     /**
      * Defines time interval for another one attempt send Redis command
@@ -81,12 +81,12 @@ public class RedisProperties extends Config {
      * Default is <code>1500</code> milliseconds
      * Time in milliseconds
      */
-    private int retryInterval = 1500;
+    private Integer retryInterval = 1500;
 
     /**
      * Subscriptions per Redis connection limit
      */
-    private int subscriptionsPerConnection = 5;
+    private Integer subscriptionsPerConnection = 5;
 
     /**
      * Name of client connection
@@ -98,14 +98,14 @@ public class RedisProperties extends Config {
      * <p>
      * Default is <code>false</code>
      */
-    private boolean sslEnable = false;
+    private Boolean sslEnable = false;
 
     /**
      * Enables SSL endpoint identification.
      * <p>
      * Default is <code>true</code>
      */
-    private boolean sslEnableEndpointIdentification = true;
+    private Boolean sslEnableEndpointIdentification = true;
 
     /**
      * Defines SSL provider used to handle SSL connections.
@@ -159,21 +159,21 @@ public class RedisProperties extends Config {
      * Default is <code>30000</code>
      * Time in milliseconds
      */
-    private int pingConnectionInterval = 10000;
+    private Integer pingConnectionInterval = 10000;
 
     /**
      * Enables TCP keepAlive for connection
      * <p>
      * Default is <code>false</code>
      */
-    private boolean keepAlive = false;
+    private Boolean keepAlive = false;
 
     /**
      * Enables TCP noDelay for connection
      * <p>
      * Default is <code>true</code>
      */
-    private boolean tcpNoDelay = true;
+    private Boolean tcpNoDelay = true;
 
     /**
      * Defines Name mapper which maps Redisson object name.

@@ -10,7 +10,7 @@ tedisson:
     cache-provider: caffeine
   redis:
     connection-type: single_node
-    enabled: true
+    enabled: false
     username: default
     password:
     single-server:
@@ -24,4 +24,11 @@ tedisson:
         core-pool-size: 10
         queue-capacity: 10
         max-pool-size: 20
-  redis-client-type: LETTUCE
+  redis-client-type: lettuce
+spring:
+  data:
+    redis:
+      host:
+      port:
+      username:
+      password:
