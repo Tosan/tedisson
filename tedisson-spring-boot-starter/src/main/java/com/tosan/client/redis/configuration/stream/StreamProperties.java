@@ -10,7 +10,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 @Data
 public class StreamProperties {
 
-    private boolean enabled = false;
+    private Boolean enabled = false;
     private Long maxMessageSize = 20L;
     private Integer trimRateSecond = 3600;
 

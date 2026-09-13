@@ -41,7 +41,7 @@ public class MessageQueueManager_SendClearCacheMessageUTest {
 
     @Test
     public void sendCorrectMessageWhenStreamIsEnabled() {
-        when(streamProperties.isEnabled()).thenReturn(true);
+        when(streamProperties.getEnabled()).thenReturn(true);
         when(redisTemplate.opsForStream()).thenReturn(streamOperations);
         messageQueueManager.sendClearCacheMessage(CACHE_NAME);
         HashMap<String, String> messageParam = new HashMap<>();
@@ -51,7 +51,7 @@ public class MessageQueueManager_SendClearCacheMessageUTest {
 
     @Test
     public void dontSendMessageWhenStreamIsNotEnabled() {
-        when(streamProperties.isEnabled()).thenReturn(false);
+        when(streamProperties.getEnabled()).thenReturn(false);
         messageQueueManager.sendClearCacheMessage(CACHE_NAME);
         HashMap<String, String> messageParam = new HashMap<>();
         messageParam.put(StreamMessageType.CLEAR_CACHE.name(), CACHE_NAME);
