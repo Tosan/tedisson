@@ -50,7 +50,7 @@ public class TedissonApplication implements CommandLineRunner {
         //sampleLocalCacheManager();
         //sampleCacheManagerWithLocalConfig();
         //sampleCacheManagerWithRedisConfig();
-        sampleCacheManagerWithRedisConfigAndCacheConfig();
+        //sampleCacheManagerWithRedisConfigAndCacheConfig();
         //sampleCacheManagerWithRedisConfigAndMessageQueue();
         //sampleLocalCacheManagerWithMessageQueueAndCacheClearing();
         //sampleUsingSpringCacheManager();

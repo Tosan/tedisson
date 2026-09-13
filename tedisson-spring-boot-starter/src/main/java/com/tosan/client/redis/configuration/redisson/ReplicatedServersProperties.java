@@ -23,10 +23,10 @@ public class ReplicatedServersProperties extends BaseMasterSlaveServersPropertie
     /**
      * Replication group scan interval in milliseconds
      */
-    private int scanInterval = 1000;
+    private Integer scanInterval = 1000;
 
     /**
      * Database index used for Redis connection
      */
-    private int database = 0;
+    private Integer database = 0;
 }

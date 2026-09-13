@@ -30,11 +30,9 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.resource.DefaultClientResources;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.redisson.api.RedissonClient;
 import org.redisson.spring.data.connection.RedissonConnectionFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -42,7 +40,6 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.data.redis.autoconfigure.ClientResourcesBuilderCustomizer;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties;
 import org.springframework.context.annotation.*;
 import org.springframework.data.redis.connection.RedisClusterConfiguration;
@@ -68,7 +65,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @since 12/26/2022
  */
 @AutoConfiguration
-@EnableConfigurationProperties({TedissonProperties.class, DataRedisProperties.class})
+@EnableConfigurationProperties(TedissonProperties.class)
 public class TedissonAutoConfiguration {
 
     @Autowired
@@ -108,7 +105,7 @@ public class TedissonAutoConfiguration {
         updatedSyncListener.ifPresent(centralCacheManager::setUpdatedSyncListener);
         messageQueueManager.ifPresent(centralCacheManager::setMessageQueueManager);
         if (tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
-            centralCacheManager.setMessageQueueEnable(tedissonProperties.getRedis().getStream().isEnabled());
+            centralCacheManager.setMessageQueueEnable(tedissonProperties.getRedis().getStream().getEnabled());
         }
         return centralCacheManager;
     }
@@ -136,7 +133,7 @@ public class TedissonAutoConfiguration {
         lettuceUpdatedListener.ifPresent(lettuceCacheManager::setUpdatedSyncListener);
         messageQueueManager.ifPresent(lettuceCacheManager::setMessageQueueManager);
         if (tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
-            lettuceCacheManager.setMessageQueueEnable(tedissonProperties.getRedis().getStream().isEnabled());
+            lettuceCacheManager.setMessageQueueEnable(tedissonProperties.getRedis().getStream().getEnabled());
         }
         return lettuceCacheManager;
     }
@@ -265,18 +262,11 @@ public class TedissonAutoConfiguration {
         return new RedissonConnectionFactory(redissonClient);
     }
 
-    @Bean(destroyMethod = "shutdown")
-    public ClientResources clientResources(ObjectProvider<ClientResourcesBuilderCustomizer> customizers) {
-        var clientResourcesBuilder = DefaultClientResources.builder();
-        customizers.orderedStream().forEach(customizer -> customizer.customize(clientResourcesBuilder));
-        return clientResourcesBuilder.build();
-    }
-
     @Bean
     @ConditionalOnMissingBean(LettuceConnectionFactory.class)
     @Conditional(OnLettuceEnabledCondition.class)
-    public LettuceConnectionFactory lettuceConnectionFactory(DataRedisProperties properties, ClientResources clientResources) {
-        LettuceClientConfiguration clientConfiguration = lettuceClientConfiguration(properties, clientResources);
+    public LettuceConnectionFactory lettuceConnectionFactory(DataRedisProperties properties, ClientResources lettuceClientResources) {
+        LettuceClientConfiguration clientConfiguration = lettuceClientConfiguration(properties, lettuceClientResources);
         // Cluster
         if (properties.getCluster() != null && properties.getCluster().getNodes() != null
             && !properties.getCluster().getNodes().isEmpty()) {
@@ -306,7 +296,7 @@ public class TedissonAutoConfiguration {
         return new LettuceConnectionFactory(standalone, clientConfiguration);
     }
 
-    private LettuceClientConfiguration lettuceClientConfiguration(DataRedisProperties properties, ClientResources clientResources) {
+    private LettuceClientConfiguration lettuceClientConfiguration(DataRedisProperties properties, ClientResources lettuceClientResources) {
         DataRedisProperties.Pool pool = properties.getLettuce().getPool();
         LettuceClientConfiguration.LettuceClientConfigurationBuilder builder;
         if (pool != null) {
@@ -342,8 +332,8 @@ public class TedissonAutoConfiguration {
                     .build();
             builder.clientOptions(clientOptions);
         }
-        if (clientResources != null) {
-            builder.clientResources(clientResources);
+        if (lettuceClientResources != null) {
+            builder.clientResources(lettuceClientResources);
         }
         return builder.build();
     }

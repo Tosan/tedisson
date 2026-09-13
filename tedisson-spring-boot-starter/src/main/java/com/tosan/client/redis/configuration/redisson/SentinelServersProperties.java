@@ -46,31 +46,31 @@ public class SentinelServersProperties extends BaseMasterSlaveServersProperties 
     /**
      * Database index used for Redis connection
      */
-    private int database = 0;
+    private Integer database = 0;
 
     /**
      * Sentinel scan interval in milliseconds
      */
-    private int scanInterval = 1000;
+    private Integer scanInterval = 1000;
 
     /**
      * Enables sentinels list check during Redisson startup.
      * <p>
      * Default is <code>true</code>
      */
-    private boolean checkSentinelsList = true;
+    private Boolean checkSentinelsList = true;
 
     /**
      * check node status from sentinel with 'master-link-status' flag
      * <p>
      * Default is <code>true</code>
      */
-    private boolean checkSlaveStatusWithSyncing = true;
+    private Boolean checkSlaveStatusWithSyncing = true;
 
     /**
      * Enables sentinels discovery.
      * <p>
      * Default is <code>true</code>
      */
-    private boolean sentinelsDiscovery = true;
+    private Boolean sentinelsDiscovery = true;
 }

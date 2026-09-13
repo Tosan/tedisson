@@ -33,26 +33,17 @@ public class RedissonClientFactory {
     }
 
     private void createInstance() throws TedissonException {
-        Config config = null;
+        Config config;
         if (tedissonProperties.getRedis().getConnectionType() == null) {
             config = getSingleNodeRedissonConfig();
-        }
-        switch (tedissonProperties.getRedis().getConnectionType()) {
-            case SINGLE_NODE:
-                config = getSingleNodeRedissonConfig();
-                break;
-            case CLUSTER:
-                config = getClusterRedissonConfig();
-                break;
-            case SENTINEL:
-                config = getSentinelRedissonConfig();
-                break;
-            case MASTER_SLAVE:
-                config = getMasterSlaveRedissonConfig();
-                break;
-            case REPLICATED:
-                config = getReplicatedRedissonConfig();
-                break;
+        } else {
+            config = switch (tedissonProperties.getRedis().getConnectionType()) {
+                case SINGLE_NODE -> getSingleNodeRedissonConfig();
+                case CLUSTER -> getClusterRedissonConfig();
+                case SENTINEL -> getSentinelRedissonConfig();
+                case MASTER_SLAVE -> getMasterSlaveRedissonConfig();
+                case REPLICATED -> getReplicatedRedissonConfig();
+            };
         }
         try {
             config.setThreads(tedissonProperties.getRedis().getThreads());
@@ -75,7 +66,7 @@ public class RedissonClientFactory {
 
     @SuppressWarnings("unchecked")
     private <T> T getSSLConfig(BaseConfig baseConfig) {
-        return (T) baseConfig.setSslEnableEndpointIdentification(tedissonProperties.getRedis().isSslEnableEndpointIdentification())
+        return (T) baseConfig.setSslEnableEndpointIdentification(tedissonProperties.getRedis().getSslEnableEndpointIdentification())
                 .setSslKeystore(tedissonProperties.getRedis().getSslKeystore())
                 .setSslKeystorePassword(tedissonProperties.getRedis().getSslKeystorePassword())
                 .setSslTruststorePassword(tedissonProperties.getRedis().getSslTruststorePassword())
@@ -87,19 +78,19 @@ public class RedissonClientFactory {
     private Config getSingleNodeRedissonConfig() {
         Config config = new Config();
         SingleServerConfig singleServerConfig = config.useSingleServer();
-        if (tedissonProperties.getRedis().isSslEnable()) {
+        if (tedissonProperties.getRedis().getSslEnable() != null && tedissonProperties.getRedis().getSslEnable()) {
             singleServerConfig = getSSLConfig(singleServerConfig);
         }
         singleServerConfig.setUsername(tedissonProperties.getRedis().getUsername())
                 .setPassword(tedissonProperties.getRedis().getPassword())
-                .setConnectTimeout(tedissonProperties.getRedis().getConnectTimeout())
-                .setPingConnectionInterval(tedissonProperties.getRedis().getPingConnectionInterval())
-                .setSubscriptionsPerConnection(tedissonProperties.getRedis().getSubscriptionsPerConnection())
-                .setTimeout(tedissonProperties.getRedis().getTimeout())
-                .setRetryAttempts(tedissonProperties.getRedis().getRetryAttempts())
-                .setRetryInterval(tedissonProperties.getRedis().getRetryInterval())
-                .setKeepAlive(tedissonProperties.getRedis().isKeepAlive())
-                .setIdleConnectionTimeout(tedissonProperties.getRedis().getIdleConnectionTimeout())
+                .setConnectTimeout(orDefault(tedissonProperties.getRedis().getConnectTimeout(), 1000))
+                .setPingConnectionInterval(orDefault(tedissonProperties.getRedis().getPingConnectionInterval(), 10000))
+                .setSubscriptionsPerConnection(orDefault(tedissonProperties.getRedis().getSubscriptionsPerConnection(), 5))
+                .setTimeout(orDefault(tedissonProperties.getRedis().getTimeout(), 3000))
+                .setRetryAttempts(orDefault(tedissonProperties.getRedis().getRetryAttempts(), 3))
+                .setRetryInterval(orDefault(tedissonProperties.getRedis().getRetryInterval(), 1500))
+                .setKeepAlive(orDefault(tedissonProperties.getRedis().getKeepAlive(), false))
+                .setIdleConnectionTimeout(orDefault(tedissonProperties.getRedis().getIdleConnectionTimeout(), 1000))
                 .setTcpNoDelay(tedissonProperties.getRedis().isTcpNoDelay())
 
 
@@ -116,21 +107,21 @@ public class RedissonClientFactory {
     private Config getMasterSlaveRedissonConfig() {
         Config config = new Config();
         MasterSlaveServersConfig masterSlaveServersConfig = config.useMasterSlaveServers();
-        if (tedissonProperties.getRedis().isSslEnable()) {
+        if (tedissonProperties.getRedis().getSslEnable() != null && tedissonProperties.getRedis().getSslEnable()) {
             masterSlaveServersConfig = getSSLConfig(masterSlaveServersConfig);
         }
         masterSlaveServersConfig.setUsername(tedissonProperties.getRedis().getUsername())
                 .setPassword(tedissonProperties.getRedis().getPassword())
-                .setConnectTimeout(tedissonProperties.getRedis().getConnectTimeout())
-                .setPingConnectionInterval(tedissonProperties.getRedis().getPingConnectionInterval())
-                .setSubscriptionsPerConnection(tedissonProperties.getRedis().getSubscriptionsPerConnection())
-                .setTimeout(tedissonProperties.getRedis().getTimeout())
-                .setRetryAttempts(tedissonProperties.getRedis().getRetryAttempts())
-                .setRetryInterval(tedissonProperties.getRedis().getRetryInterval())
-                .setKeepAlive(tedissonProperties.getRedis().isKeepAlive())
-                .setIdleConnectionTimeout(tedissonProperties.getRedis().getIdleConnectionTimeout())
+                .setConnectTimeout(orDefault(tedissonProperties.getRedis().getConnectTimeout(), 1000))
+                .setPingConnectionInterval(orDefault(tedissonProperties.getRedis().getPingConnectionInterval(), 10000))
+                .setSubscriptionsPerConnection(orDefault(tedissonProperties.getRedis().getSubscriptionsPerConnection(), 5))
+                .setTimeout(orDefault(tedissonProperties.getRedis().getTimeout(), 3000))
+                .setRetryAttempts(orDefault(tedissonProperties.getRedis().getRetryAttempts(), 3))
+                .setRetryInterval(orDefault(tedissonProperties.getRedis().getRetryInterval(), 1500))
+                .setKeepAlive(orDefault(tedissonProperties.getRedis().getKeepAlive(), false))
+                .setIdleConnectionTimeout(orDefault(tedissonProperties.getRedis().getIdleConnectionTimeout(), 1000))
                 .setTcpNoDelay(tedissonProperties.getRedis().isTcpNoDelay())
-                .setSslEnableEndpointIdentification(tedissonProperties.getRedis().isSslEnableEndpointIdentification())
+                .setSslEnableEndpointIdentification(tedissonProperties.getRedis().getSslEnableEndpointIdentification())
                 .setSslKeystore(tedissonProperties.getRedis().getSslKeystore())
                 .setSslKeystorePassword(tedissonProperties.getRedis().getSslKeystorePassword())
                 .setSslTruststorePassword(tedissonProperties.getRedis().getSslTruststorePassword())
@@ -162,21 +153,21 @@ public class RedissonClientFactory {
     private Config getSentinelRedissonConfig() {
         Config config = new Config();
         SentinelServersConfig sentinelServersConfig = config.useSentinelServers();
-        if (tedissonProperties.getRedis().isSslEnable()) {
+        if (tedissonProperties.getRedis().getSslEnable() != null && tedissonProperties.getRedis().getSslEnable()) {
             sentinelServersConfig = getSSLConfig(sentinelServersConfig);
         }
         sentinelServersConfig.setUsername(tedissonProperties.getRedis().getUsername())
                 .setPassword(tedissonProperties.getRedis().getPassword())
-                .setConnectTimeout(tedissonProperties.getRedis().getConnectTimeout())
-                .setPingConnectionInterval(tedissonProperties.getRedis().getPingConnectionInterval())
-                .setSubscriptionsPerConnection(tedissonProperties.getRedis().getSubscriptionsPerConnection())
-                .setTimeout(tedissonProperties.getRedis().getTimeout())
-                .setRetryAttempts(tedissonProperties.getRedis().getRetryAttempts())
-                .setRetryInterval(tedissonProperties.getRedis().getRetryInterval())
-                .setKeepAlive(tedissonProperties.getRedis().isKeepAlive())
-                .setIdleConnectionTimeout(tedissonProperties.getRedis().getIdleConnectionTimeout())
+                .setConnectTimeout(orDefault(tedissonProperties.getRedis().getConnectTimeout(), 1000))
+                .setPingConnectionInterval(orDefault(tedissonProperties.getRedis().getPingConnectionInterval(), 10000))
+                .setSubscriptionsPerConnection(orDefault(tedissonProperties.getRedis().getSubscriptionsPerConnection(), 5))
+                .setTimeout(orDefault(tedissonProperties.getRedis().getTimeout(), 3000))
+                .setRetryAttempts(orDefault(tedissonProperties.getRedis().getRetryAttempts(), 3))
+                .setRetryInterval(orDefault(tedissonProperties.getRedis().getRetryInterval(), 1500))
+                .setKeepAlive(orDefault(tedissonProperties.getRedis().getKeepAlive(), false))
+                .setIdleConnectionTimeout(orDefault(tedissonProperties.getRedis().getIdleConnectionTimeout(), 1000))
                 .setTcpNoDelay(tedissonProperties.getRedis().isTcpNoDelay())
-                .setSslEnableEndpointIdentification(tedissonProperties.getRedis().isSslEnableEndpointIdentification())
+                .setSslEnableEndpointIdentification(tedissonProperties.getRedis().getSslEnableEndpointIdentification())
                 .setSslKeystore(tedissonProperties.getRedis().getSslKeystore())
                 .setSslKeystorePassword(tedissonProperties.getRedis().getSslKeystorePassword())
                 .setSslTruststorePassword(tedissonProperties.getRedis().getSslTruststorePassword())
@@ -190,9 +181,9 @@ public class RedissonClientFactory {
                 .setSentinelPassword(tedissonProperties.getRedis().getSentinelServers().getSentinelPassword())
                 .setDatabase(tedissonProperties.getRedis().getSentinelServers().getDatabase())
                 .setScanInterval(tedissonProperties.getRedis().getSentinelServers().getScanInterval())
-                .setCheckSentinelsList(tedissonProperties.getRedis().getSentinelServers().isCheckSentinelsList())
-                .setCheckSlaveStatusWithSyncing(tedissonProperties.getRedis().getSentinelServers().isCheckSlaveStatusWithSyncing())
-                .setSentinelsDiscovery(tedissonProperties.getRedis().getSentinelServers().isSentinelsDiscovery())
+                .setCheckSentinelsList(tedissonProperties.getRedis().getSentinelServers().getCheckSentinelsList())
+                .setCheckSlaveStatusWithSyncing(tedissonProperties.getRedis().getSentinelServers().getCheckSlaveStatusWithSyncing())
+                .setSentinelsDiscovery(tedissonProperties.getRedis().getSentinelServers().getSentinelsDiscovery())
 
                 .setSlaveConnectionMinimumIdleSize(tedissonProperties.getRedis().getSentinelServers().getSlaveConnectionMinimumIdleSize())
                 .setSlaveConnectionPoolSize(tedissonProperties.getRedis().getSentinelServers().getSlaveConnectionPoolSize())
@@ -213,21 +204,21 @@ public class RedissonClientFactory {
     private Config getClusterRedissonConfig() {
         Config config = new Config();
         ClusterServersConfig clusterServersConfig = config.useClusterServers();
-        if (tedissonProperties.getRedis().isSslEnable()) {
+        if (tedissonProperties.getRedis().getSslEnable() != null && tedissonProperties.getRedis().getSslEnable()) {
             clusterServersConfig = getSSLConfig(clusterServersConfig);
         }
         clusterServersConfig.setUsername(tedissonProperties.getRedis().getUsername())
                 .setPassword(tedissonProperties.getRedis().getPassword())
-                .setConnectTimeout(tedissonProperties.getRedis().getConnectTimeout())
-                .setPingConnectionInterval(tedissonProperties.getRedis().getPingConnectionInterval())
-                .setSubscriptionsPerConnection(tedissonProperties.getRedis().getSubscriptionsPerConnection())
-                .setTimeout(tedissonProperties.getRedis().getTimeout())
-                .setRetryAttempts(tedissonProperties.getRedis().getRetryAttempts())
-                .setRetryInterval(tedissonProperties.getRedis().getRetryInterval())
-                .setKeepAlive(tedissonProperties.getRedis().isKeepAlive())
-                .setIdleConnectionTimeout(tedissonProperties.getRedis().getIdleConnectionTimeout())
+                .setConnectTimeout(orDefault(tedissonProperties.getRedis().getConnectTimeout(), 1000))
+                .setPingConnectionInterval(orDefault(tedissonProperties.getRedis().getPingConnectionInterval(), 10000))
+                .setSubscriptionsPerConnection(orDefault(tedissonProperties.getRedis().getSubscriptionsPerConnection(), 5))
+                .setTimeout(orDefault(tedissonProperties.getRedis().getTimeout(), 3000))
+                .setRetryAttempts(orDefault(tedissonProperties.getRedis().getRetryAttempts(), 3))
+                .setRetryInterval(orDefault(tedissonProperties.getRedis().getRetryInterval(), 1500))
+                .setKeepAlive(orDefault(tedissonProperties.getRedis().getKeepAlive(), false))
+                .setIdleConnectionTimeout(orDefault(tedissonProperties.getRedis().getIdleConnectionTimeout(), 1000))
                 .setTcpNoDelay(tedissonProperties.getRedis().isTcpNoDelay())
-                .setSslEnableEndpointIdentification(tedissonProperties.getRedis().isSslEnableEndpointIdentification())
+                .setSslEnableEndpointIdentification(tedissonProperties.getRedis().getSslEnableEndpointIdentification())
                 .setSslKeystore(tedissonProperties.getRedis().getSslKeystore())
                 .setSslKeystorePassword(tedissonProperties.getRedis().getSslKeystorePassword())
                 .setSslTruststorePassword(tedissonProperties.getRedis().getSslTruststorePassword())
@@ -237,7 +228,7 @@ public class RedissonClientFactory {
 
                 .setNatMapper(tedissonProperties.getRedis().getClusterServers().getNatMapper())
                 .setScanInterval(tedissonProperties.getRedis().getClusterServers().getScanInterval())
-                .setCheckSlotsCoverage(tedissonProperties.getRedis().getClusterServers().isCheckSlotsCoverage())
+                .setCheckSlotsCoverage(tedissonProperties.getRedis().getClusterServers().getCheckSlotsCoverage())
 
                 .setSlaveConnectionMinimumIdleSize(tedissonProperties.getRedis().getClusterServers().getSlaveConnectionMinimumIdleSize())
                 .setSlaveConnectionPoolSize(tedissonProperties.getRedis().getClusterServers().getSlaveConnectionPoolSize())
@@ -259,21 +250,21 @@ public class RedissonClientFactory {
     private Config getReplicatedRedissonConfig() {
         Config config = new Config();
         ReplicatedServersConfig replicatedServersConfig = config.useReplicatedServers();
-        if (tedissonProperties.getRedis().isSslEnable()) {
+        if (tedissonProperties.getRedis().getSslEnable() != null && tedissonProperties.getRedis().getSslEnable()) {
             replicatedServersConfig = getSSLConfig(replicatedServersConfig);
         }
         replicatedServersConfig.setUsername(tedissonProperties.getRedis().getUsername())
                 .setPassword(tedissonProperties.getRedis().getPassword())
-                .setConnectTimeout(tedissonProperties.getRedis().getConnectTimeout())
-                .setPingConnectionInterval(tedissonProperties.getRedis().getPingConnectionInterval())
-                .setSubscriptionsPerConnection(tedissonProperties.getRedis().getSubscriptionsPerConnection())
-                .setTimeout(tedissonProperties.getRedis().getTimeout())
-                .setRetryAttempts(tedissonProperties.getRedis().getRetryAttempts())
-                .setRetryInterval(tedissonProperties.getRedis().getRetryInterval())
-                .setKeepAlive(tedissonProperties.getRedis().isKeepAlive())
-                .setIdleConnectionTimeout(tedissonProperties.getRedis().getIdleConnectionTimeout())
+                .setConnectTimeout(orDefault(tedissonProperties.getRedis().getConnectTimeout(), 1000))
+                .setPingConnectionInterval(orDefault(tedissonProperties.getRedis().getPingConnectionInterval(), 10000))
+                .setSubscriptionsPerConnection(orDefault(tedissonProperties.getRedis().getSubscriptionsPerConnection(), 5))
+                .setTimeout(orDefault(tedissonProperties.getRedis().getTimeout(), 3000))
+                .setRetryAttempts(orDefault(tedissonProperties.getRedis().getRetryAttempts(), 3))
+                .setRetryInterval(orDefault(tedissonProperties.getRedis().getRetryInterval(), 1500))
+                .setKeepAlive(orDefault(tedissonProperties.getRedis().getKeepAlive(), false))
+                .setIdleConnectionTimeout(orDefault(tedissonProperties.getRedis().getIdleConnectionTimeout(), 1000))
                 .setTcpNoDelay(tedissonProperties.getRedis().isTcpNoDelay())
-                .setSslEnableEndpointIdentification(tedissonProperties.getRedis().isSslEnableEndpointIdentification())
+                .setSslEnableEndpointIdentification(tedissonProperties.getRedis().getSslEnableEndpointIdentification())
                 .setSslKeystore(tedissonProperties.getRedis().getSslKeystore())
                 .setSslKeystorePassword(tedissonProperties.getRedis().getSslKeystorePassword())
                 .setSslTruststorePassword(tedissonProperties.getRedis().getSslTruststorePassword())
@@ -302,7 +293,7 @@ public class RedissonClientFactory {
 
     private String convertAddress(String address) {
         if (!address.startsWith(REDIS_PROTOCOL_PREFIX) && !address.startsWith(REDISS_PROTOCOL_PREFIX)) {
-            if (tedissonProperties.getRedis().isSslEnable()) {
+            if (tedissonProperties.getRedis().getSslEnable() != null && tedissonProperties.getRedis().getSslEnable()) {
                 return REDISS_PROTOCOL_PREFIX + address;
             } else {
                 return REDIS_PROTOCOL_PREFIX + address;
@@ -333,5 +324,9 @@ public class RedissonClientFactory {
             convertedAddresses.add(convertAddress(address));
         }
         return convertedAddresses;
+    }
+
+    private <T> T orDefault(T value, T fallback) {
+        return value != null ? value : fallback;
     }
 }

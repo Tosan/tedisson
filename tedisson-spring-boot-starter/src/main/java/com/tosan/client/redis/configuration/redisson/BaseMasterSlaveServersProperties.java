@@ -22,12 +22,12 @@ public class BaseMasterSlaveServersProperties {
     /**
      * Redis 'slave' node minimum idle connection amount for <b>each</b> slave node
      */
-    private int slaveConnectionMinimumIdleSize = 24;
+    private Integer slaveConnectionMinimumIdleSize = 24;
 
     /**
      * Redis 'slave' node maximum connection pool size for <b>each</b> slave node
      */
-    private int slaveConnectionPoolSize = 64;
+    private Integer slaveConnectionPoolSize = 64;
 
     /**
      * When the retry interval <code>failedSlavesReconnectionTimeout<code/>
@@ -38,23 +38,23 @@ public class BaseMasterSlaveServersProperties {
      * <p>
      * Default is 3000
      */
-    private int failedSlaveReconnectionInterval = 3000;
+    private Integer failedSlaveReconnectionInterval = 3000;
 
     /**
      * Check failed slaves
      * time interval in milliseconds
      */
-    private int failedSlaveCheckInterval = 180000;
+    private Integer failedSlaveCheckInterval = 180000;
 
     /**
      * Redis 'master' node minimum idle connection amount for <b>each</b> slave node
      */
-    private int masterConnectionMinimumIdleSize = 24;
+    private Integer masterConnectionMinimumIdleSize = 24;
 
     /**
      * Redis 'master' node maximum connection pool size
      */
-    private int masterConnectionPoolSize = 64;
+    private Integer masterConnectionPoolSize = 64;
 
     /**
      * Set node type used for read operation.
@@ -73,12 +73,12 @@ public class BaseMasterSlaveServersProperties {
     /**
      * Redis 'slave' node minimum idle subscription (pub/sub) connection amount for <b>each</b> slave node
      */
-    private int subscriptionConnectionMinimumIdleSize = 1;
+    private Integer subscriptionConnectionMinimumIdleSize = 1;
 
     /**
      * Redis 'slave' node maximum subscription (pub/sub) connection pool size for <b>each</b> slave node
      */
-    private int subscriptionConnectionPoolSize = 50;
+    private Integer subscriptionConnectionPoolSize = 50;
 
     /**
      * Interval in milliseconds to check the endpoint's DNS<p>
@@ -87,5 +87,5 @@ public class BaseMasterSlaveServersProperties {
      * <p>
      * Default is <code>5000</code>.
      */
-    private long dnsMonitoringInterval = 5000;
+    private Long dnsMonitoringInterval = 5000L;
 }
