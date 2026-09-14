@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
  * @author R.Mehri
  * @since 5/31/2023
  */
+@SuppressWarnings("unused")
 public interface TedissonCacheManager {
     /**
      * @param cacheName Cache name
@@ -104,6 +105,16 @@ public interface TedissonCacheManager {
      * @param timeUnit   Time unit for time to live and time to idle
      */
     void addItemsToHash(Map<String, Object> items, Long timeToLive, TimeUnit timeUnit);
+
+    /**
+     * Adds item to hash only if it doesn't already exist.
+     *
+     * @param key        Hash key
+     * @param value      Value
+     * @param timeToLive Item time to live
+     * @param timeUnit   Time unit for time to live
+     */
+    boolean addItemToHashIfAbsent(String key, Object value, Long timeToLive, TimeUnit timeUnit);
 
     /**
      * @param key Hash key
