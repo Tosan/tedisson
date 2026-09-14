@@ -286,6 +286,14 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
     }
 
     @Override
+    public boolean addItemToHashIfAbsent(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
+        LettuceCacheElement cacheElement = new LettuceCacheElement(value, instanceID);
+        return Boolean.TRUE.equals(
+                redisTemplate.opsForValue().setIfAbsent(
+                        key, cacheElement, Duration.of(timeToLive, timeUnit.toChronoUnit())));
+    }
+
+    @Override
     public void removeItemFromHash(String key) {
         redisTemplate.delete(key);
     }
