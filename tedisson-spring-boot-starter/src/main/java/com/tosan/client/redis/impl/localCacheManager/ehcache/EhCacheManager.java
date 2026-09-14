@@ -202,7 +202,7 @@ public class EhCacheManager extends LocalCacheManagerBase implements LocalCacheM
     }
 
     @Override
-    public boolean addItemToCashIfAbsent(String cacheName, Object key, Object value, Long timeToLive, TimeUnit timeUnit) {
+    public boolean addItemToCacheIfAbsent(String cacheName, Object key, Object value, Long timeToLive, TimeUnit timeUnit) {
         EhCacheElement ehcacheElement = createEhCacheElement(timeToLive, null, timeUnit);
         ehcacheElement.setValue(value);
         return manager.getCache(cacheName).putIfAbsent(key, ehcacheElement);
