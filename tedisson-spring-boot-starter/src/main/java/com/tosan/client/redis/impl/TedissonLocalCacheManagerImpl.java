@@ -90,7 +90,7 @@ public class TedissonLocalCacheManagerImpl extends TedissonCacheManagerBase impl
     @Override
     public boolean addItemToHashIfAbsent(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
         localCacheManager.createCache(key);
-        return localCacheManager.addItemToCashIfAbsent(key, key, value, timeToLive, timeUnit);
+        return localCacheManager.addItemToCacheIfAbsent(key, key, value, timeToLive, timeUnit);
     }
 
     @Override

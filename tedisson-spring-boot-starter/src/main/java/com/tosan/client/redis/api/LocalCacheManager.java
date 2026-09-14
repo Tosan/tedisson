@@ -131,7 +131,7 @@ public interface LocalCacheManager {
      * @param timeToLive Item time to live
      * @param timeUnit   Time unit for time to live
      */
-    boolean addItemToCashIfAbsent(String cacheName, Object key, Object value, Long timeToLive, TimeUnit timeUnit);
+    boolean addItemToCacheIfAbsent(String cacheName, Object key, Object value, Long timeToLive, TimeUnit timeUnit);
 
     /**
      * @param cacheName Cache name
