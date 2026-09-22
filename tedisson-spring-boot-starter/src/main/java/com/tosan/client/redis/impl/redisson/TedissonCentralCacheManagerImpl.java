@@ -230,6 +230,12 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     }
 
     @Override
+    public boolean addItemToHashIfAbsent(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
+        RBucket<CacheElement> bucket = redisClient.getBucket(key);
+        return bucket.setIfAbsent(new CacheElement(value, instanceID), Duration.of(timeToLive, timeUnit.toChronoUnit()));
+    }
+
+    @Override
     public void removeItemFromHash(String key) {
         RBucket<CacheElement> bucket = redisClient.getBucket(key);
         bucket.delete();
