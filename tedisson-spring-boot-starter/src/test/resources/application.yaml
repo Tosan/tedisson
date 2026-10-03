@@ -25,3 +25,7 @@ tedisson:
         queue-capacity: 10
         max-pool-size: 20
   redis-client-type: LETTUCE
+spring:
+  data:
+    redis:
+      database: 10

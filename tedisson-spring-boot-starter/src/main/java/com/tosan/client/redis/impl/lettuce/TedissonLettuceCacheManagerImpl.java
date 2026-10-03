@@ -11,6 +11,7 @@ import com.tosan.client.redis.cacheconfig.ListenerSyncedLocalCacheConfig;
 import com.tosan.client.redis.cacheconfig.LocalCacheConfig;
 import com.tosan.client.redis.enumuration.CentralCacheType;
 import com.tosan.client.redis.enumuration.LocalCacheProvider;
+import com.tosan.client.redis.enumuration.RedisCacheClient;
 import com.tosan.client.redis.exception.TedissonRuntimeException;
 import com.tosan.client.redis.impl.TedissonCacheManagerBase;
 import com.tosan.client.redis.impl.lettuce.listener.LettuceSyncCreatedListener;
@@ -61,19 +62,18 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
     private boolean messageQueueEnable = false;
     private MessageQueueManager messageQueueManager;
 
-    public TedissonLettuceCacheManagerImpl(RedisConnectionFactory connectionFactory) {
+    public TedissonLettuceCacheManagerImpl(RedisConnectionFactory connectionFactory, RedisSerializer<LettuceCacheElement> redisSerializer) {
         this.connectionFactory = connectionFactory;
-        this.redisTemplate = createRedisTemplate(connectionFactory);
+        this.redisTemplate = createRedisTemplate(connectionFactory, redisSerializer);
     }
 
-    private RedisTemplate<String, Object> createRedisTemplate(RedisConnectionFactory connectionFactory) {
+    private RedisTemplate<String, Object> createRedisTemplate(RedisConnectionFactory connectionFactory, RedisSerializer<LettuceCacheElement> redisSerializer) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
-        RedisSerializer<Object> serializer = new GenericJackson2JsonRedisSerializer();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(serializer);
+        template.setValueSerializer(redisSerializer);
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(serializer);
+        template.setHashValueSerializer(redisSerializer);
         template.afterPropertiesSet();
         return template;
     }
@@ -280,6 +280,14 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
     @Override
     public void addItemsToHash(Map<String, Object> items, Long timeToLive, TimeUnit timeUnit) {
         items.forEach((key, value) -> addItemToHash(key, value, timeToLive, timeUnit));
+    }
+
+    @Override
+    public boolean addItemToHashIfAbsent(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
+        LettuceCacheElement cacheElement = new LettuceCacheElement(value, instanceID);
+        return Boolean.TRUE.equals(
+                redisTemplate.opsForValue().setIfAbsent(
+                        key, cacheElement, Duration.of(timeToLive, timeUnit.toChronoUnit())));
     }
 
     @Override
@@ -493,6 +501,11 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
     @Override
     public Boolean isRedisEnabled() {
         return true;
+    }
+
+    @Override
+    public RedisCacheClient getRedisCacheProvider() {
+        return RedisCacheClient.LETTUCE;
     }
 
     @Override

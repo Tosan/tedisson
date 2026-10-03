@@ -28,5 +28,5 @@ public class MasterSlaveServersProperties extends BaseMasterSlaveServersProperti
     /**
      * Database index used for Redis connection
      */
-    private int database = 0;
+    private Integer database = 0;
 }

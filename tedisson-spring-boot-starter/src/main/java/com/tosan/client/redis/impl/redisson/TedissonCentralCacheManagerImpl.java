@@ -11,6 +11,7 @@ import com.tosan.client.redis.cacheconfig.ListenerSyncedLocalCacheConfig;
 import com.tosan.client.redis.cacheconfig.LocalCacheConfig;
 import com.tosan.client.redis.enumuration.CentralCacheType;
 import com.tosan.client.redis.enumuration.LocalCacheProvider;
+import com.tosan.client.redis.enumuration.RedisCacheClient;
 import com.tosan.client.redis.exception.TedissonRuntimeException;
 import com.tosan.client.redis.util.CacheTtlUtil;
 import com.tosan.client.redis.impl.TedissonCacheManagerBase;
@@ -226,6 +227,12 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     }
 
     @Override
+    public boolean addItemToHashIfAbsent(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
+        RBucket<CacheElement> bucket = redisClient.getBucket(key);
+        return bucket.setIfAbsent(new CacheElement(value, instanceID), Duration.of(timeToLive, timeUnit.toChronoUnit()));
+    }
+
+    @Override
     public void removeItemFromHash(String key) {
         RBucket<CacheElement> bucket = redisClient.getBucket(key);
         bucket.delete();
@@ -418,6 +425,11 @@ public class TedissonCentralCacheManagerImpl extends TedissonCacheManagerBase im
     @Override
     public Boolean isRedisEnabled() {
         return true;
+    }
+
+    @Override
+    public RedisCacheClient getRedisCacheProvider() {
+        return RedisCacheClient.REDISSON;
     }
 
     @Override

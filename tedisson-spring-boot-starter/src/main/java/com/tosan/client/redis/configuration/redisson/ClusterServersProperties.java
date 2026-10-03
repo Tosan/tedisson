@@ -25,12 +25,12 @@ public class ClusterServersProperties extends BaseMasterSlaveServersProperties {
     /**
      * Redis cluster scan interval in milliseconds
      */
-    private int scanInterval = 5000;
+    private Integer scanInterval = 5000;
 
     /**
      * Enables cluster slots check during Redisson startup.
      * <p>
      * Default is <code>true</code>
      */
-    private boolean checkSlotsCoverage = true;
+    private Boolean checkSlotsCoverage = true;
 }

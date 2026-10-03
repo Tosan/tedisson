@@ -24,7 +24,7 @@ public class MessageQueueManager {
     }
 
     public void sendClearCacheMessage(String cacheName) {
-        if (streamProperties.isEnabled()) {
+        if (streamProperties.getEnabled()) {
             HashMap<String, String> messageParam = new HashMap<>();
             messageParam.put(StreamMessageType.CLEAR_CACHE.name(), cacheName);
             redisTemplate.opsForStream().add(MessageParameter.TEDISSON_STREAM_NAME, messageParam);

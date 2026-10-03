@@ -2,6 +2,7 @@ package com.tosan.client.redis.api;
 
 import com.tosan.client.redis.cacheconfig.CacheConfig;
 import com.tosan.client.redis.enumuration.LocalCacheProvider;
+import com.tosan.client.redis.enumuration.RedisCacheClient;
 import org.springframework.cache.CacheManager;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit;
  * @author R.Mehri
  * @since 5/31/2023
  */
+@SuppressWarnings("unused")
 public interface TedissonCacheManager {
     /**
      * @param cacheName Cache name
@@ -103,6 +105,16 @@ public interface TedissonCacheManager {
      * @param timeUnit   Time unit for time to live and time to idle
      */
     void addItemsToHash(Map<String, Object> items, Long timeToLive, TimeUnit timeUnit);
+
+    /**
+     * Adds item to hash only if it doesn't already exist.
+     *
+     * @param key        Hash key
+     * @param value      Value
+     * @param timeToLive Item time to live
+     * @param timeUnit   Time unit for time to live
+     */
+    boolean addItemToHashIfAbsent(String key, Object value, Long timeToLive, TimeUnit timeUnit);
 
     /**
      * @param key Hash key
@@ -305,6 +317,11 @@ public interface TedissonCacheManager {
      * @return redis enable
      */
     Boolean isRedisEnabled();
+
+    /**
+     * @return local cache provider
+     */
+    RedisCacheClient getRedisCacheProvider();
 
     /**
      * @return local cache provider

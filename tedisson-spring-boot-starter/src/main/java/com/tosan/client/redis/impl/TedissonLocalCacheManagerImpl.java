@@ -7,6 +7,7 @@ import com.tosan.client.redis.api.TedissonCacheManager;
 import com.tosan.client.redis.cacheconfig.CacheConfig;
 import com.tosan.client.redis.cacheconfig.LocalCacheConfig;
 import com.tosan.client.redis.enumuration.LocalCacheProvider;
+import com.tosan.client.redis.enumuration.RedisCacheClient;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.cache.CacheManager;
 
@@ -86,6 +87,11 @@ public class TedissonLocalCacheManagerImpl extends TedissonCacheManagerBase impl
         }
     }
 
+    @Override
+    public boolean addItemToHashIfAbsent(String key, Object value, Long timeToLive, TimeUnit timeUnit) {
+        localCacheManager.createCache(key);
+        return localCacheManager.addItemToCacheIfAbsent(key, key, value, timeToLive, timeUnit);
+    }
 
     @Override
     public void removeItemFromHash(String key) {
@@ -207,6 +213,11 @@ public class TedissonLocalCacheManagerImpl extends TedissonCacheManagerBase impl
     @Override
     public Boolean isRedisEnabled() {
         return false;
+    }
+
+    @Override
+    public RedisCacheClient getRedisCacheProvider() {
+        return null;
     }
 
     @Override

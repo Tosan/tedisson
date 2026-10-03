@@ -3,20 +3,21 @@ package com.tosan.client.redis.configuration;
 import com.tosan.client.redis.api.LocalCacheManager;
 import com.tosan.client.redis.api.TedissonCacheManager;
 import com.tosan.client.redis.configuration.condition.OnLettuceEnabledCondition;
-import com.tosan.client.redis.configuration.condition.OnLettuceStreamEnabledCondition;
 import com.tosan.client.redis.configuration.condition.OnRedissonEnabledCondition;
 import com.tosan.client.redis.configuration.condition.OnRedissonStreamEnabledCondition;
 import com.tosan.client.redis.configuration.redisson.TedissonProperties;
 import com.tosan.client.redis.configuration.redisson.TedissonPropertiesCustomizer;
+import com.tosan.client.redis.configuration.serializer.Kryo5RedisSerializer;
 import com.tosan.client.redis.exception.TedissonException;
 import com.tosan.client.redis.impl.TedissonLocalCacheManagerImpl;
-import com.tosan.client.redis.impl.localCacheManager.LocalCacheManagerBase;
-import com.tosan.client.redis.impl.localCacheManager.caffeine.CaffeineCacheManager;
-import com.tosan.client.redis.impl.localCacheManager.ehcache.EhCacheManager;
+import com.tosan.client.redis.impl.lettuce.LettuceCacheElement;
 import com.tosan.client.redis.impl.lettuce.TedissonLettuceCacheManagerImpl;
 import com.tosan.client.redis.impl.lettuce.listener.LettuceSyncCreatedListener;
 import com.tosan.client.redis.impl.lettuce.listener.LettuceSyncRemovedListener;
 import com.tosan.client.redis.impl.lettuce.listener.LettuceSyncUpdatedListener;
+import com.tosan.client.redis.impl.localCacheManager.LocalCacheManagerBase;
+import com.tosan.client.redis.impl.localCacheManager.caffeine.CaffeineCacheManager;
+import com.tosan.client.redis.impl.localCacheManager.ehcache.EhCacheManager;
 import com.tosan.client.redis.impl.redisson.TedissonCentralCacheManagerImpl;
 import com.tosan.client.redis.impl.redisson.listener.TedissonCreatedSyncListener;
 import com.tosan.client.redis.impl.redisson.listener.TedissonRemovedSyncListener;
@@ -26,6 +27,11 @@ import com.tosan.client.redis.stream.ConsumerListener;
 import com.tosan.client.redis.stream.MessageQueueManager;
 import com.tosan.client.redis.stream.StreamConsumerRunner;
 import com.tosan.client.redis.util.CacheTtlUtil;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.SocketOptions;
+import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.resource.ClientResources;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.redisson.api.RedissonClient;
 import org.redisson.spring.data.connection.RedissonConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,10 +41,17 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties;
 import org.springframework.context.annotation.*;
+import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisPassword;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -53,7 +66,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @since 12/26/2022
  */
 @AutoConfiguration
-@EnableConfigurationProperties({TedissonProperties.class})
+@EnableConfigurationProperties(TedissonProperties.class)
 public class TedissonAutoConfiguration {
 
     @Autowired
@@ -103,7 +116,7 @@ public class TedissonAutoConfiguration {
         updatedSyncListener.ifPresent(centralCacheManager::setUpdatedSyncListener);
         messageQueueManager.ifPresent(centralCacheManager::setMessageQueueManager);
         if (tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
-            centralCacheManager.setMessageQueueEnable(tedissonProperties.getRedis().getStream().isEnabled());
+            centralCacheManager.setMessageQueueEnable(tedissonProperties.getRedis().getStream().getEnabled());
         }
         return centralCacheManager;
     }
@@ -119,18 +132,19 @@ public class TedissonAutoConfiguration {
     public TedissonCacheManager tedissonCentralLettuceCacheManager(
             LocalCacheManager localCacheManager,
             RedisConnectionFactory redisConnectionFactory,
+            RedisSerializer<LettuceCacheElement> redisSerializer,
             Optional<LettuceSyncCreatedListener> lettuceCreatedListener,
             Optional<LettuceSyncRemovedListener> lettuceRemovedListener,
             Optional<LettuceSyncUpdatedListener> lettuceUpdatedListener,
             Optional<MessageQueueManager> messageQueueManager) {
-        TedissonLettuceCacheManagerImpl lettuceCacheManager = new TedissonLettuceCacheManagerImpl(redisConnectionFactory);
+        TedissonLettuceCacheManagerImpl lettuceCacheManager = new TedissonLettuceCacheManagerImpl(redisConnectionFactory, redisSerializer);
         lettuceCacheManager.setLocalCacheManager(localCacheManager);
         lettuceCreatedListener.ifPresent(lettuceCacheManager::setCreatedSyncListener);
         lettuceRemovedListener.ifPresent(lettuceCacheManager::setRemovedSyncListener);
         lettuceUpdatedListener.ifPresent(lettuceCacheManager::setUpdatedSyncListener);
         messageQueueManager.ifPresent(lettuceCacheManager::setMessageQueueManager);
         if (tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
-            lettuceCacheManager.setMessageQueueEnable(tedissonProperties.getRedis().getStream().isEnabled());
+            lettuceCacheManager.setMessageQueueEnable(tedissonProperties.getRedis().getStream().getEnabled());
         }
         return lettuceCacheManager;
     }
@@ -206,20 +220,30 @@ public class TedissonAutoConfiguration {
 
     @Bean
     @Conditional(OnLettuceEnabledCondition.class)
-    LettuceSyncCreatedListener lettuceSyncCreatedListener(LocalCacheManager localCacheManager) {
+    LettuceSyncCreatedListener lettuceSyncCreatedListener(LocalCacheManager localCacheManager, RedisSerializer<LettuceCacheElement> redisSerializer) {
         return new LettuceSyncCreatedListener(localCacheManager);
     }
 
     @Bean
     @Conditional(OnLettuceEnabledCondition.class)
-    LettuceSyncUpdatedListener lettuceSyncUpdatedListener(LocalCacheManager localCacheManager) {
+    LettuceSyncUpdatedListener lettuceSyncUpdatedListener(LocalCacheManager localCacheManager, RedisSerializer<LettuceCacheElement> redisSerializer) {
         return new LettuceSyncUpdatedListener(localCacheManager);
     }
 
     @Bean
     @Conditional(OnLettuceEnabledCondition.class)
-    LettuceSyncRemovedListener lettuceSyncRemovedListener(LocalCacheManager localCacheManager) {
+    LettuceSyncRemovedListener lettuceSyncRemovedListener(LocalCacheManager localCacheManager, RedisSerializer<LettuceCacheElement> redisSerializer) {
         return new LettuceSyncRemovedListener(localCacheManager);
+    }
+
+    // -------------------------------------------------------------------------
+    // Lettuce kryo5 serializer — only when client type is LETTUCE
+    // -----
+
+    @Bean
+    @Conditional(OnLettuceEnabledCondition.class)
+    RedisSerializer<LettuceCacheElement> redisSerializer() {
+        return new Kryo5RedisSerializer<>();
     }
 
     // -------------------------------------------------------------------------
@@ -250,9 +274,79 @@ public class TedissonAutoConfiguration {
     }
 
     @Bean
-    @Conditional(OnLettuceStreamEnabledCondition.class)
-    public LettuceConnectionFactory lettuceConnectionFactory() {
-        return new LettuceConnectionFactory();
+    @ConditionalOnMissingBean(LettuceConnectionFactory.class)
+    @Conditional(OnLettuceEnabledCondition.class)
+    public LettuceConnectionFactory lettuceConnectionFactory(DataRedisProperties properties, ClientResources lettuceClientResources) {
+        LettuceClientConfiguration clientConfiguration = lettuceClientConfiguration(properties, lettuceClientResources);
+        // Cluster
+        if (properties.getCluster() != null && properties.getCluster().getNodes() != null
+            && !properties.getCluster().getNodes().isEmpty()) {
+            RedisClusterConfiguration cluster = new RedisClusterConfiguration(properties.getCluster().getNodes());
+            if (properties.getCluster().getMaxRedirects() != null) {
+                cluster.setMaxRedirects(properties.getCluster().getMaxRedirects());
+            }
+            if (properties.getUsername() != null) {
+                cluster.setUsername(properties.getUsername());
+            }
+            if (properties.getPassword() != null) {
+                cluster.setPassword(RedisPassword.of(properties.getPassword()));
+            }
+            return new LettuceConnectionFactory(cluster, clientConfiguration);
+        }
+        // Standalone
+        RedisStandaloneConfiguration standalone = new RedisStandaloneConfiguration();
+        standalone.setHostName(properties.getHost());
+        standalone.setPort(properties.getPort());
+        standalone.setDatabase(properties.getDatabase());
+        if (properties.getUsername() != null) {
+            standalone.setUsername(properties.getUsername());
+        }
+        if (properties.getPassword() != null) {
+            standalone.setPassword(RedisPassword.of(properties.getPassword()));
+        }
+        return new LettuceConnectionFactory(standalone, clientConfiguration);
+    }
+
+    private LettuceClientConfiguration lettuceClientConfiguration(DataRedisProperties properties, ClientResources lettuceClientResources) {
+        DataRedisProperties.Pool pool = properties.getLettuce().getPool();
+        LettuceClientConfiguration.LettuceClientConfigurationBuilder builder;
+        if (pool != null) {
+            GenericObjectPoolConfig<StatefulConnection<?, ?>> poolConfig = new GenericObjectPoolConfig<>();
+            poolConfig.setMaxTotal(pool.getMaxActive());
+            poolConfig.setMaxIdle(pool.getMaxIdle());
+            poolConfig.setMinIdle(pool.getMinIdle());
+            if (pool.getMaxWait() != null) {
+                poolConfig.setMaxWait(pool.getMaxWait());
+            }
+            builder = LettucePoolingClientConfiguration.builder().poolConfig(poolConfig);
+        } else {
+            builder = LettuceClientConfiguration.builder();
+        }
+        if (properties.getTimeout() != null) {
+            builder.commandTimeout(properties.getTimeout());
+        }
+        if (properties.getClientName() != null) {
+            builder.clientName(properties.getClientName());
+        }
+        if (properties.getSsl() != null && properties.getSsl().isEnabled()) {
+            builder.useSsl();
+        }
+        if (properties.getLettuce().getShutdownTimeout() != null) {
+            builder.shutdownTimeout(properties.getLettuce().getShutdownTimeout());
+        }
+        if (properties.getConnectTimeout() != null) {
+            SocketOptions socketOptions = SocketOptions.builder()
+                    .connectTimeout(properties.getConnectTimeout())
+                    .build();
+            ClientOptions clientOptions = ClientOptions.builder()
+                    .socketOptions(socketOptions)
+                    .build();
+            builder.clientOptions(clientOptions);
+        }
+        if (lettuceClientResources != null) {
+            builder.clientResources(lettuceClientResources);
+        }
+        return builder.build();
     }
 
     @Bean(name = "tedissonThreadPoolTaskExecutor", destroyMethod = "shutdown")
