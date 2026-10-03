@@ -26,6 +26,7 @@ import com.tosan.client.redis.scheduler.TedissonStreamScheduler;
 import com.tosan.client.redis.stream.ConsumerListener;
 import com.tosan.client.redis.stream.MessageQueueManager;
 import com.tosan.client.redis.stream.StreamConsumerRunner;
+import com.tosan.client.redis.util.CacheTtlUtil;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.api.StatefulConnection;
@@ -85,6 +86,15 @@ public class TedissonAutoConfiguration {
     }
 
     // -------------------------------------------------------------------------
+    // CacheTtlUtil — remaining ttl
+    // -------------------------------------------------------------------------
+    @Bean
+    @ConditionalOnMissingBean()
+    public CacheTtlUtil cacheTtlUtil() {
+        return new CacheTtlUtil();
+    }
+
+    // -------------------------------------------------------------------------
     // Cache manager — Redisson (default central client)
     // Connection configured via tedisson.redis.* properties
     // -------------------------------------------------------------------------
@@ -97,8 +107,9 @@ public class TedissonAutoConfiguration {
             Optional<TedissonCreatedSyncListener> createdSyncListener,
             Optional<TedissonRemovedSyncListener> removedSyncListener,
             Optional<TedissonUpdatedSyncListener> updatedSyncListener,
-            Optional<MessageQueueManager> messageQueueManager) {
-        TedissonCentralCacheManagerImpl centralCacheManager = new TedissonCentralCacheManagerImpl(redissonClient);
+            Optional<MessageQueueManager> messageQueueManager,
+            CacheTtlUtil cacheTtlUtil) {
+        TedissonCentralCacheManagerImpl centralCacheManager = new TedissonCentralCacheManagerImpl(redissonClient,cacheTtlUtil);
         centralCacheManager.setLocalCacheManager(localCacheManager);
         createdSyncListener.ifPresent(centralCacheManager::setCreatedSyncListener);
         removedSyncListener.ifPresent(centralCacheManager::setRemovedSyncListener);
@@ -145,8 +156,8 @@ public class TedissonAutoConfiguration {
     @Bean("localCacheManager")
     @Primary
     @ConditionalOnProperty(name = "tedisson.local.cache-provider", havingValue = "ehcache", matchIfMissing = true)
-    public EhCacheManager ehcacheLocalCacheManager(Optional<MessageQueueManager> messageQueueManager) {
-        EhCacheManager ehCacheManager = new EhCacheManager();
+    public EhCacheManager ehcacheLocalCacheManager(Optional<MessageQueueManager> messageQueueManager,CacheTtlUtil cacheTtlUtil) {
+        EhCacheManager ehCacheManager = new EhCacheManager(cacheTtlUtil);
         if (tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
             messageQueueManager.ifPresent(ehCacheManager::setMessageQueueManager);
         }
@@ -155,8 +166,8 @@ public class TedissonAutoConfiguration {
 
     @Bean("localCacheManager")
     @ConditionalOnProperty(name = "tedisson.local.cache-provider", havingValue = "caffeine")
-    public CaffeineCacheManager caffeineLocalCacheManager(Optional<MessageQueueManager> messageQueueManager) {
-        CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
+    public CaffeineCacheManager caffeineLocalCacheManager(Optional<MessageQueueManager> messageQueueManager,CacheTtlUtil cacheTtlUtil) {
+        CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager(cacheTtlUtil);
         if (tedissonProperties.getRedis() != null && tedissonProperties.getRedis().getStream() != null) {
             messageQueueManager.ifPresent(caffeineCacheManager::setMessageQueueManager);
         }
