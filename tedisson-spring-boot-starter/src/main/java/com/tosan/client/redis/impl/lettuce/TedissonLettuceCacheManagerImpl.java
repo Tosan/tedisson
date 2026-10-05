@@ -32,7 +32,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -54,6 +53,7 @@ import java.util.stream.Collectors;
 public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase implements TedissonCacheManager {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> atomicRedisTemplate;
     private final RedisConnectionFactory connectionFactory;
     private LocalCacheManager localCacheManager;
     private LettuceSyncCreatedListener createdSyncListener;
@@ -65,6 +65,18 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
     public TedissonLettuceCacheManagerImpl(RedisConnectionFactory connectionFactory, RedisSerializer<LettuceCacheElement> redisSerializer) {
         this.connectionFactory = connectionFactory;
         this.redisTemplate = createRedisTemplate(connectionFactory, redisSerializer);
+        this.atomicRedisTemplate = createAtomicRedisTemplate(connectionFactory);
+    }
+
+    private RedisTemplate<String, String> createAtomicRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new StringRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
     }
 
     private RedisTemplate<String, Object> createRedisTemplate(RedisConnectionFactory connectionFactory, RedisSerializer<LettuceCacheElement> redisSerializer) {
@@ -385,10 +397,10 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
     @Override
     public void initializeAtomicLongCache(String cacheName, String key, CacheExpiryPolicy cacheExpiryPolicy) {
         String atomicKey = getAtomicKey(cacheName, key);
-        if (!isKeyInHash(atomicKey)) {
-            redisTemplate.opsForValue().set(atomicKey, 0L);
+        if (!isAtomicKeyInHash(atomicKey)) {
+            atomicRedisTemplate.opsForValue().set(atomicKey, "0");
             if (cacheExpiryPolicy != null && cacheExpiryPolicy.getTimeToLiveSecond() > 0) {
-                redisTemplate.expire(atomicKey, cacheExpiryPolicy.getTimeToLiveSecond(), TimeUnit.SECONDS);
+                atomicRedisTemplate.expire(atomicKey, cacheExpiryPolicy.getTimeToLiveSecond(), TimeUnit.SECONDS);
             }
         }
     }
@@ -397,7 +409,7 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
     public long incrementAndGetAtomicItem(String cacheName, String key) {
         String atomicKey = getAtomicKey(cacheName, key);
         // Use Redis increment command for atomic increment
-        ValueOperations<String, Object> ops = redisTemplate.opsForValue();
+        ValueOperations<String, String> ops = atomicRedisTemplate.opsForValue();
         Long result = ops.increment(atomicKey);
         if (result == null) {
             setAtomicItem(cacheName, key, 1L);
@@ -408,26 +420,26 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
     @Override
     public void resetAtomicItem(String cacheName, String key) {
         String atomicKey = getAtomicKey(cacheName, key);
-        redisTemplate.delete(atomicKey);
+        atomicRedisTemplate.delete(atomicKey);
     }
 
     @Override
     public long getAtomicValue(String cacheName, String key) {
         String atomicKey = getAtomicKey(cacheName, key);
-        Object current = redisTemplate.opsForValue().get(atomicKey);
-        return current == null ? 0 : ((Number) current).longValue();
+        String current = atomicRedisTemplate.opsForValue().get(atomicKey);
+        return current == null ? 0L : Long.parseLong(current);
     }
 
     @Override
     public void setAtomicItem(String cacheName, String key, long value) {
         String atomicKey = getAtomicKey(cacheName, key);
-        redisTemplate.opsForValue().set(atomicKey, value);
+        atomicRedisTemplate.opsForValue().set(atomicKey, String.valueOf(value));
     }
 
     @Override
     public void expireAtomicItem(String cacheName, String key, Long timeToLive, TimeUnit timeUnit) {
         String atomicKey = getAtomicKey(cacheName, key);
-        redisTemplate.expire(atomicKey, timeToLive, timeUnit);
+        atomicRedisTemplate.expire(atomicKey, timeToLive, timeUnit);
     }
 
     @Override
@@ -684,5 +696,9 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
     @Override
     public Long getRemainingItemTtl(String cacheName, String key, TimeUnit timeUnit) {
         throw new UnsupportedOperationException("getRemainingItemTtl is not supported for Lettuce cache manager yet");
+    }
+
+    private boolean isAtomicKeyInHash(String key) {
+        return Boolean.TRUE.equals(atomicRedisTemplate.hasKey(key));
     }
 }
