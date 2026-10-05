@@ -403,7 +403,7 @@ public class TedissonLettuceCacheManagerImpl extends TedissonCacheManagerBase im
         if (!isAtomicKeyInHash(atomicKey)) {
             atomicRedisTemplate.opsForValue().set(atomicKey, "0");
             if (cacheExpiryPolicy != null && cacheExpiryPolicy.getTimeToLiveSecond() > 0) {
-                redisTemplate.expire(atomicKey, cacheExpiryPolicy.getTimeToLiveSecond(), TimeUnit.SECONDS);
+                atomicRedisTemplate.expire(atomicKey, cacheExpiryPolicy.getTimeToLiveSecond(), TimeUnit.SECONDS);
             }
         }
     }
