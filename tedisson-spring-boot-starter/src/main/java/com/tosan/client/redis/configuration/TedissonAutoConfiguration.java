@@ -29,7 +29,10 @@ import com.tosan.client.redis.stream.StreamConsumerRunner;
 import com.tosan.client.redis.util.CacheTtlUtil;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
+import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.cluster.ClusterClientOptions;
+import io.lettuce.core.cluster.ClusterTopologyRefreshOptions;
 import io.lettuce.core.resource.ClientResources;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.redisson.api.RedissonClient;
@@ -56,6 +59,7 @@ import org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProc
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.config.TaskManagementConfigUtils;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -277,9 +281,7 @@ public class TedissonAutoConfiguration {
     public LettuceConnectionFactory lettuceConnectionFactory(RedisProperties properties, ClientResources lettuceClientResources) {
         LettuceClientConfiguration clientConfiguration = lettuceClientConfiguration(properties, lettuceClientResources);
         // Cluster
-        if (properties.getCluster() != null
-            && properties.getCluster().getNodes() != null
-            && !properties.getCluster().getNodes().isEmpty()) {
+        if (isCluster(properties)) {
             RedisClusterConfiguration cluster =
                     new RedisClusterConfiguration(properties.getCluster().getNodes());
             if (properties.getCluster().getMaxRedirects() != null) {
@@ -319,6 +321,8 @@ public class TedissonAutoConfiguration {
             if (pool.getMaxWait() != null) {
                 poolConfig.setMaxWait(pool.getMaxWait());
             }
+            // Borrowed connections must still be open so a closed connection is replaced.
+            poolConfig.setTestOnBorrow(true);
             builder = LettucePoolingClientConfiguration.builder()
                     .poolConfig(poolConfig);
         } else {
@@ -336,7 +340,9 @@ public class TedissonAutoConfiguration {
         if (properties.getLettuce().getShutdownTimeout() != null) {
             builder.shutdownTimeout(properties.getLettuce().getShutdownTimeout());
         }
-        if (properties.getConnectTimeout() != null) {
+        if (isCluster(properties)) {
+            builder.clientOptions(clusterClientOptions(properties));
+        } else if (properties.getConnectTimeout() != null) {
             SocketOptions socketOptions = SocketOptions.builder()
                     .connectTimeout(properties.getConnectTimeout())
                     .build();
@@ -349,6 +355,41 @@ public class TedissonAutoConfiguration {
             builder.clientResources(lettuceClientResources);
         }
         return builder.build();
+    }
+
+    private static boolean isCluster(RedisProperties properties) {
+        return properties.getCluster() != null && properties.getCluster().getNodes() != null
+                && !properties.getCluster().getNodes().isEmpty();
+    }
+
+    /**
+     * Refreshes the cluster slot map when a node drops so commands follow failover and reconnect when that node returns.
+     * Lettuce 6 leaves adaptive triggers off, so they are enabled here. Timeout and reconnect attempts stay at the library defaults.
+     */
+    static ClientOptions clusterClientOptions(RedisProperties properties) {
+        RedisProperties.Lettuce.Cluster.Refresh refresh = properties.getLettuce().getCluster().getRefresh();
+        Duration period = refresh.getPeriod();
+        if (period == null || period.isZero() || period.isNegative()) {
+            period = Duration.ofSeconds(30);
+        }
+        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
+                .dynamicRefreshSources(refresh.isDynamicRefreshSources())
+                .enableAllAdaptiveRefreshTriggers()
+                .enablePeriodicRefresh(period)
+                .closeStaleConnections(true)
+                .build();
+        SocketOptions.Builder socketOptions = SocketOptions.builder().keepAlive(true);
+        if (properties.getConnectTimeout() != null) {
+            socketOptions.connectTimeout(properties.getConnectTimeout());
+        }
+        return ClusterClientOptions.builder()
+                .autoReconnect(true)
+                .suspendReconnectOnProtocolFailure(false)
+                .pingBeforeActivateConnection(true)
+                .socketOptions(socketOptions.build())
+                .timeoutOptions(TimeoutOptions.enabled())
+                .topologyRefreshOptions(topologyRefreshOptions)
+                .build();
     }
 
     @Bean(name = "tedissonThreadPoolTaskExecutor", destroyMethod = "shutdown")
